@@ -2,8 +2,8 @@ table! {
     confirmed_users (user_id) {
         user_id -> Uuid,
         table_id -> Nullable<Uuid>,
-        created_at -> Timestamptz,
-        updated_at -> Nullable<Timestamptz>,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
     }
 }
 
@@ -21,8 +21,8 @@ table! {
         name -> Text,
         last_name -> Nullable<Text>,
         email -> Text,
-        created_at -> Timestamptz,
-        updated_at -> Nullable<Timestamptz>,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
     }
 }
 
