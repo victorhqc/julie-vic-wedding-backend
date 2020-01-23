@@ -6,8 +6,11 @@ use gotham::router::builder::*;
 use gotham::router::Router;
 use gotham::state::State;
 use hyper::{Body, Method, Response, StatusCode};
+mod api;
 mod models;
 mod schema;
+mod services;
+
 
 fn main() {
     let addr = "127.0.0.1:7878";
