@@ -20,3 +20,18 @@ Run migrations
 ```sh
 DATABASE_URL=postgresql://postgres@localhost:5432/postgres diesel migration run
 ```
+
+Run in development mode.
+
+```sh
+cargo run
+
+# Or with cargo-watch for updating after changes
+cargo watch -x "run"
+```
+
+For watching changes install `cargo-watch`
+
+```sh
+cargo install cargo-watch
+```
