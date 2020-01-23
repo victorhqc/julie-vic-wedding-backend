@@ -1,9 +1,30 @@
 #[macro_use]
 extern crate diesel;
 
-mod schema;
+use gotham::helpers::http::response::create_empty_response;
+use gotham::router::builder::*;
+use gotham::router::Router;
+use gotham::state::State;
+use hyper::{Body, Method, Response, StatusCode};
 mod models;
+mod schema;
 
 fn main() {
-    println!("Hello, world!");
+    let addr = "127.0.0.1:7878";
+    println!("Listening for requests at http://{}", addr);
+    gotham::start(addr, router())
+}
+
+fn router() -> Router {
+    build_simple_router(|route| {
+        route
+            .request(vec![Method::GET, Method::HEAD], "/")
+            .to(index_handler);
+    })
+}
+
+fn index_handler(state: State) -> (State, Response<Body>) {
+    let res = create_empty_response(&state, StatusCode::OK);
+
+    (state, res)
 }

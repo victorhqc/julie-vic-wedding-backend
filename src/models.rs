@@ -1,8 +1,8 @@
-use serde_derive::{Serialize};
-use chrono::NaiveDateTime;
+use super::schema::{confirmed_users, tables, users};
 use chrono::naive::serde::ts_seconds;
+use chrono::NaiveDateTime;
+use serde_derive::Serialize;
 use uuid::Uuid;
-use super::schema::{users, tables, confirmed_users};
 
 #[derive(Debug, Serialize, Queryable)]
 pub struct User {
@@ -22,7 +22,7 @@ pub struct NewUser<'a> {
     pub id: &'a Uuid,
     pub name: &'a str,
     pub last_name: Option<&'a str>,
-    pub email: &'a str
+    pub email: &'a str,
 }
 
 #[derive(Debug, Serialize, Queryable)]
@@ -37,7 +37,7 @@ pub struct Table {
 pub struct NewTable<'a> {
     pub id: &'a Uuid,
     pub name: &'a str,
-    pub alias: Option<&'a str>
+    pub alias: Option<&'a str>,
 }
 
 #[derive(Debug, Serialize, Queryable)]
@@ -54,5 +54,5 @@ pub struct ConfirmedUser {
 #[table_name = "confirmed_users"]
 pub struct NewConfirmedUser<'a> {
     pub user_id: &'a Uuid,
-    pub table_id: &'a Uuid
+    pub table_id: &'a Uuid,
 }
