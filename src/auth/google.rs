@@ -44,7 +44,7 @@ pub fn build_google_client() -> BasicClient {
         "https://www.googleapis.com/auth/userinfo.profile".to_string()
     ))
     .set_redirect_url(RedirectUrl::new(
-        Url::parse("http://localhost:7878/redirect").expect("Invalid redirect URL"),
+        Url::parse("http://localhost:7878/google/redirect").expect("Invalid redirect URL"),
     ))
 }
 
