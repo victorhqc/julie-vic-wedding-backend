@@ -2,13 +2,10 @@ use oauth2::prelude::*;
 use oauth2::{
     AuthUrl, AuthorizationCode, ClientId, ClientSecret, CsrfToken, RedirectUrl, Scope, TokenUrl,
     TokenResponse,
-    basic::{BasicClient, BasicTokenType}, StandardTokenResponse, EmptyExtraTokenFields, RequestTokenError
+    basic::{BasicClient, BasicTokenType}, StandardTokenResponse, EmptyExtraTokenFields
 };
 use std::env;
-use std::io::{BufRead, BufReader, Write};
-use std::net::TcpListener;
 use url::Url;
-use std::collections::HashMap;
 use anyhow::Result;
 use http::{HeaderMap, HeaderValue, header::{AUTHORIZATION}};
 
@@ -57,7 +54,6 @@ pub fn gen_authorize_url(client: BasicClient) -> (url::Url, CsrfToken) {
 
 pub fn exchange_token(extractor: &GoogleRedirectExtractor, client: &BasicClient) -> BasicToken {
     let code = AuthorizationCode::new(extractor.code.to_owned());
-    // let state = CsrfToken::new(extractor.state);
 
     let token = client.exchange_code(code).expect("Couldn't exchange token");
 
