@@ -4,7 +4,8 @@ use chrono::NaiveDateTime;
 use serde_derive::Serialize;
 use uuid::Uuid;
 
-#[derive(Debug, Serialize, Queryable)]
+#[derive(Debug, Serialize, Queryable, Identifiable)]
+#[table_name = "users"]
 pub struct User {
     pub id: Uuid,
     pub name: String,
@@ -18,14 +19,15 @@ pub struct User {
 
 #[derive(Insertable)]
 #[table_name = "users"]
-pub struct NewUser<'a> {
-    pub id: &'a Uuid,
-    pub name: &'a str,
-    pub last_name: Option<&'a str>,
-    pub email: &'a str,
+pub struct NewUser {
+    pub id: Uuid,
+    pub name: String,
+    pub last_name: Option<String>,
+    pub email: String
 }
 
-#[derive(Debug, Serialize, Queryable)]
+#[derive(Debug, Serialize, Queryable, Identifiable)]
+#[table_name = "tables"]
 pub struct Table {
     pub id: Uuid,
     pub name: String,
@@ -40,7 +42,9 @@ pub struct NewTable<'a> {
     pub alias: Option<&'a str>,
 }
 
-#[derive(Debug, Serialize, Queryable)]
+#[derive(Debug, Serialize, Queryable, Associations)]
+#[belongs_to(User)]
+#[belongs_to(Table)]
 pub struct ConfirmedUser {
     pub user_id: Uuid,
     pub table_id: Uuid,

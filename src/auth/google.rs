@@ -93,12 +93,12 @@ pub type BasicToken = StandardTokenResponse<EmptyExtraTokenFields, BasicTokenTyp
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GoogleProfile {
-    id: String,
-    email: String,
-    family_name: Option<String>,
-    gender: Option<String>,
-    given_name: Option<String>,
-    locale: Option<String>,
-    picture: Option<String>,
-    verified_email: bool,
+    pub id: String,
+    pub email: String,
+    pub family_name: Option<String>,
+    pub gender: Option<String>,
+    pub given_name: Option<String>,
+    pub locale: Option<String>,
+    pub picture: Option<String>,
+    pub verified_email: bool,
 }

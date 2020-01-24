@@ -8,6 +8,7 @@ use crate::auth::{
     build_google_client, exchange_token, gen_authorize_url, get_user_profile,
     GoogleRedirectExtractor,
 };
+use crate::api::Api;
 
 pub fn google_authorize_handler(state: State) -> (State, Response<Body>) {
     // TODO: Move to state.
@@ -25,11 +26,14 @@ pub fn google_redirect_handler(mut state: State) -> (State, Response<Body>) {
     let token = exchange_token(&query_param, &google_client);
     let profile = get_user_profile(&token).expect("Couldn't get user's profile");
 
+    let api = Api::connect().expect("Couldn't connect to DB");
+    let user = api.find_or_create_user(&profile).expect("Couldn't create User");
+
     let res = create_response(
         &state,
         StatusCode::OK,
         mime::APPLICATION_JSON,
-        serde_json::to_vec(&profile).expect("Couldn't serialize query param"),
+        serde_json::to_vec(&user).expect("Couldn't serialize query param"),
     );
 
     (state, res)

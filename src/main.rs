@@ -20,8 +20,8 @@ mod api;
 mod auth;
 mod models;
 mod schema;
-mod services;
 mod handlers;
+mod users;
 
 use auth::{
     GoogleRedirectExtractor,
