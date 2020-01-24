@@ -7,14 +7,20 @@ extern crate serde_derive;
 #[macro_use]
 extern crate gotham_derive;
 
-
 use dotenv::dotenv;
-use gotham::helpers::http::response::{create_empty_response, create_temporary_redirect};
+use gotham::handler::{HandlerError, HandlerFuture};
+use gotham::helpers::http::response::{
+    create_empty_response, create_response, create_temporary_redirect,
+};
 use gotham::router::builder::*;
 use gotham::router::Router;
 use gotham::state::{FromState, State};
 use hyper::{Body, Response, StatusCode};
 use std::env;
+use std::pin::Pin;
+
+use futures::prelude::*;
+use futures::{future, stream, Future, Stream};
 
 mod api;
 mod auth;
@@ -22,7 +28,10 @@ mod models;
 mod schema;
 mod services;
 
-use auth::{build_google_client, gen_authorize_url, exchange_token, GoogleRedirectExtractor};
+use auth::{
+    build_google_client, exchange_token, gen_authorize_url, get_user_profile,
+    GoogleRedirectExtractor,
+};
 
 fn main() {
     dotenv().ok();
@@ -60,17 +69,18 @@ fn authorize_handler(state: State) -> (State, Response<Body>) {
     (state, res)
 }
 
-fn redirect_handler(mut state: State) -> (State, (mime::Mime, Vec<u8>)) {
-    let res = {
-        let query_param = GoogleRedirectExtractor::take_from(&mut state);
-        let google_client = build_google_client();
-        exchange_token(&query_param, &google_client);
+fn redirect_handler(mut state: State) -> (State, Response<Body>) {
+    let query_param = GoogleRedirectExtractor::take_from(&mut state);
+    let google_client = build_google_client();
+    let token = exchange_token(&query_param, &google_client);
+    let profile = get_user_profile(&token).expect("Couldn't get user's profile");
 
-        (
-            mime::APPLICATION_JSON,
-            serde_json::to_vec(&query_param).expect("Couldn't serialize query param"),
-        )
-    };
+    let res = create_response(
+        &state,
+        StatusCode::OK,
+        mime::APPLICATION_JSON,
+        serde_json::to_vec(&profile).expect("Couldn't serialize query param"),
+    );
 
     (state, res)
 }

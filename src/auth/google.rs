@@ -1,13 +1,18 @@
 use oauth2::prelude::*;
 use oauth2::{
     AuthUrl, AuthorizationCode, ClientId, ClientSecret, CsrfToken, RedirectUrl, Scope, TokenUrl,
+    TokenResponse,
     basic::{BasicClient, BasicTokenType}, StandardTokenResponse, EmptyExtraTokenFields, RequestTokenError
 };
 use std::env;
 use std::io::{BufRead, BufReader, Write};
 use std::net::TcpListener;
 use url::Url;
-// use anyhow::Result;
+use std::collections::HashMap;
+use anyhow::Result;
+use http::{HeaderMap, HeaderValue, header::{AUTHORIZATION}};
+
+const GOOGLE_PEOPLE_ENDPOINT: &'static str = "https://www.googleapis.com";
 
 pub fn build_google_client() -> BasicClient {
     let google_client_id = ClientId::new(
@@ -50,13 +55,33 @@ pub fn gen_authorize_url(client: BasicClient) -> (url::Url, CsrfToken) {
     client.authorize_url(CsrfToken::new_random)
 }
 
-pub fn exchange_token(extractor: &GoogleRedirectExtractor, client: &BasicClient) {
+pub fn exchange_token(extractor: &GoogleRedirectExtractor, client: &BasicClient) -> BasicToken {
     let code = AuthorizationCode::new(extractor.code.to_owned());
     // let state = CsrfToken::new(extractor.state);
 
     let token = client.exchange_code(code).expect("Couldn't exchange token");
 
-    println!("{:?}", token);
+    token
+}
+
+pub fn get_user_profile(token: &BasicToken) -> Result<GoogleProfile> {
+    let token_header = format!("Bearer {}", token.access_token().secret());
+    println!("{}", token_header);
+
+    let mut headers = HeaderMap::new();
+    headers.insert(AUTHORIZATION, HeaderValue::from_str(&token_header).unwrap());
+
+    let url = format!("{}/oauth2/v1/userinfo?alt=json", GOOGLE_PEOPLE_ENDPOINT);
+
+    let client = reqwest::Client::new();
+    let mut response = client
+        .get(&url)
+        .headers(headers)
+        .send()?;
+
+    let profile: GoogleProfile = response.json()?;
+
+    Ok(profile)
 }
 
 #[derive(Deserialize, Serialize, StateData, StaticResponseExtender)]
@@ -66,4 +91,18 @@ pub struct GoogleRedirectExtractor {
     scope: Vec<String>,
     prompt: String,
     session_state: String
+}
+
+pub type BasicToken = StandardTokenResponse<EmptyExtraTokenFields, BasicTokenType>;
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GoogleProfile {
+    id: String,
+    email: String,
+    family_name: Option<String>,
+    gender: Option<String>,
+    given_name: Option<String>,
+    locale: Option<String>,
+    picture: Option<String>,
+    verified_email: bool,
 }
