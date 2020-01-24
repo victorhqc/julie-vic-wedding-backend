@@ -35,10 +35,10 @@ pub fn build_google_client() -> BasicClient {
         Some(token_url)
     )
     .add_scope(Scope::new(
-        "https://www.googleapis.com/auth/calendar".to_string(),
+        "https://www.googleapis.com/auth/userinfo.email".to_string()
     ))
     .add_scope(Scope::new(
-        "https://www.googleapis.com/auth/plus.me".to_string(),
+        "https://www.googleapis.com/auth/userinfo.profile".to_string()
     ))
     .set_redirect_url(RedirectUrl::new(
         Url::parse("http://localhost:7878/redirect").expect("Invalid redirect URL"),
