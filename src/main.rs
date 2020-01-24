@@ -1,12 +1,18 @@
 #[macro_use]
 extern crate diesel;
 
+#[macro_use]
+extern crate serde_derive;
+
+#[macro_use]
+extern crate gotham_derive;
+
 
 use dotenv::dotenv;
 use gotham::helpers::http::response::{create_empty_response, create_temporary_redirect};
 use gotham::router::builder::*;
 use gotham::router::Router;
-use gotham::state::State;
+use gotham::state::{FromState, State};
 use hyper::{Body, Response, StatusCode};
 use std::env;
 
@@ -16,7 +22,7 @@ mod models;
 mod schema;
 mod services;
 
-use auth::{build_google_client, gen_authorize_url};
+use auth::{build_google_client, gen_authorize_url, exchange_token, GoogleRedirectExtractor};
 
 fn main() {
     dotenv().ok();
@@ -31,6 +37,10 @@ fn router() -> Router {
         route.get_or_head("/").to(index_handler);
 
         route.get("/authorize").to(authorize_handler);
+        route
+            .get("/redirect")
+            .with_query_string_extractor::<GoogleRedirectExtractor>()
+            .to(redirect_handler);
     })
 }
 
@@ -45,9 +55,22 @@ fn authorize_handler(state: State) -> (State, Response<Body>) {
     let google_client = build_google_client();
     let (authorize_url, _) = gen_authorize_url(google_client);
 
-    println!("{}", env::var("GOOGLE_CLIENT_ID").expect("oops"));
-
     let res = create_temporary_redirect(&state, authorize_url.to_string());
+
+    (state, res)
+}
+
+fn redirect_handler(mut state: State) -> (State, (mime::Mime, Vec<u8>)) {
+    let res = {
+        let query_param = GoogleRedirectExtractor::take_from(&mut state);
+        let google_client = build_google_client();
+        exchange_token(&query_param, &google_client);
+
+        (
+            mime::APPLICATION_JSON,
+            serde_json::to_vec(&query_param).expect("Couldn't serialize query param"),
+        )
+    };
 
     (state, res)
 }

@@ -1,12 +1,13 @@
-use oauth2::basic::BasicClient;
 use oauth2::prelude::*;
 use oauth2::{
     AuthUrl, AuthorizationCode, ClientId, ClientSecret, CsrfToken, RedirectUrl, Scope, TokenUrl,
+    basic::{BasicClient, BasicTokenType}, StandardTokenResponse, EmptyExtraTokenFields, RequestTokenError
 };
 use std::env;
 use std::io::{BufRead, BufReader, Write};
 use std::net::TcpListener;
 use url::Url;
+// use anyhow::Result;
 
 pub fn build_google_client() -> BasicClient {
     let google_client_id = ClientId::new(
@@ -47,4 +48,22 @@ pub fn build_google_client() -> BasicClient {
 
 pub fn gen_authorize_url(client: BasicClient) -> (url::Url, CsrfToken) {
     client.authorize_url(CsrfToken::new_random)
+}
+
+pub fn exchange_token(extractor: &GoogleRedirectExtractor, client: &BasicClient) {
+    let code = AuthorizationCode::new(extractor.code.to_owned());
+    // let state = CsrfToken::new(extractor.state);
+
+    let token = client.exchange_code(code).expect("Couldn't exchange token");
+
+    println!("{:?}", token);
+}
+
+#[derive(Deserialize, Serialize, StateData, StaticResponseExtender)]
+pub struct GoogleRedirectExtractor {
+    state: String,
+    code: String,
+    scope: Vec<String>,
+    prompt: String,
+    session_state: String
 }
