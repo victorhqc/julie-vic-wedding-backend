@@ -62,7 +62,6 @@ pub fn exchange_token(extractor: &GoogleRedirectExtractor, client: &BasicClient)
 
 pub fn get_user_profile(token: &BasicToken) -> Result<GoogleProfile> {
     let token_header = format!("Bearer {}", token.access_token().secret());
-    println!("{}", token_header);
 
     let mut headers = HeaderMap::new();
     headers.insert(AUTHORIZATION, HeaderValue::from_str(&token_header).unwrap());
