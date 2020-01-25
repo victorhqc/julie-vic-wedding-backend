@@ -26,7 +26,7 @@ pub fn google_redirect_handler(mut state: State) -> (State, Response<Body>) {
     let token = exchange_token(&query_param, &google_client);
     let profile = get_user_profile(&token).expect("Couldn't get user's profile");
 
-    let api = Api::connect().expect("Couldn't connect to DB");
+    let api = Api::borrow_from(&state);
     let user = api.find_or_create_user(&profile).expect("Couldn't create User");
 
     let res = create_response(

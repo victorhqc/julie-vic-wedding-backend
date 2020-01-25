@@ -1,31 +1,35 @@
-use anyhow::{Result};
+use anyhow::Result;
 use diesel::r2d2::{ConnectionManager, PooledConnection};
 use diesel::PgConnection;
 use std::env;
+use std::sync::{Arc, Mutex};
 
-use crate::models::{User};
+use crate::auth::GoogleProfile;
+use crate::models::User;
 use crate::users::{create_user, find_by_email};
-use crate::auth::{GoogleProfile};
 
+#[derive(Clone, StateData)]
 pub struct Api {
-    pool: r2d2::Pool<DBConnectionManager>,
+    pool: Arc<Mutex<r2d2::Pool<DBConnectionManager>>>,
 }
 
 impl Api {
-    pub fn connect() -> Result<Self> {
+    pub fn connect() -> Self {
         let database_url =
             env::var("DATABASE_URL").unwrap_or("postgresql://postgres@localhost:5432".to_string());
         let manager = ConnectionManager::<PgConnection>::new(database_url);
-        let pool = r2d2::Pool::new(manager)?;
+        let pool = r2d2::Pool::new(manager).expect("Failed to connect DB Pool");
 
         // To get a connection simply do
         // let conn = pool.get()?;
 
-        Ok(Self { pool })
+        Self {
+            pool: Arc::new(Mutex::new(pool)),
+        }
     }
 
     pub fn get_connection(&self) -> Result<DBConnection> {
-        let conn = self.pool.get()?;
+        let conn = self.pool.lock().unwrap().get()?;
 
         Ok(conn)
     }

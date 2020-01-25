@@ -11,6 +11,9 @@ use dotenv::dotenv;
 use gotham::helpers::http::response::{
     create_empty_response,
 };
+use gotham::middleware::state::StateMiddleware;
+use gotham::pipeline::single::single_pipeline;
+use gotham::pipeline::single_middleware;
 use gotham::router::builder::*;
 use gotham::router::Router;
 use gotham::state::{State};
@@ -22,6 +25,8 @@ mod models;
 mod schema;
 mod handlers;
 mod users;
+
+use api::Api;
 
 use auth::{
     GoogleRedirectExtractor,
@@ -38,7 +43,19 @@ fn main() {
 }
 
 fn router() -> Router {
-    build_simple_router(|route| {
+    // create the counter to share across handlers
+    let api = Api::connect();
+
+    // create our state middleware to share the counter
+    let middleware = StateMiddleware::new(api);
+
+    // create a middleware pipeline from our middleware
+    let pipeline = single_middleware(middleware);
+
+    // construct a basic chain from our pipeline
+    let (chain, pipelines) = single_pipeline(pipeline);
+
+    build_router(chain, pipelines, |route| {
         route.get_or_head("/").to(index_handler);
 
         route.get("/google/authorize").to(google_authorize_handler);
