@@ -4,12 +4,13 @@ use diesel::prelude::*;
 
 use uuid::Uuid;
 
+use crate::schema;
 use crate::models::{User, NewUser};
 use crate::api::{DBConnection};
 use crate::auth::GoogleProfile;
 
 pub fn create_user(conn: &DBConnection, profile: &GoogleProfile) -> Result<User> {
-    use crate::schema::users;
+    use schema::users;
 
     let id = Uuid::new_v4();
 
@@ -28,13 +29,15 @@ pub fn create_user(conn: &DBConnection, profile: &GoogleProfile) -> Result<User>
     Ok(result)
 }
 
-pub fn find_by_email(conn: &DBConnection, user_email: String) -> Result<User> {
-    use crate::schema::users::dsl::*;
+pub fn find_by_email(conn: &DBConnection, user_email: String) -> Option<User> {
+    use schema::users::dsl::*;
 
     let found_user = users
         .filter(email.eq(user_email))
-        .first::<User>(conn)
-        .expect("Error finding users");
+        .first::<User>(conn);
 
-    Ok(found_user)
+    match found_user {
+        Ok(user) => Some(user),
+        Err(_) => None
+    }
 }

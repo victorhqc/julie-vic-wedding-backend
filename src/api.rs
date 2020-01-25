@@ -33,10 +33,15 @@ impl Api {
     pub fn find_or_create_user(&self, profile: &GoogleProfile) -> Result<User> {
         let conn = self.get_connection()?;
 
-        let user = find_by_email(&conn, profile.email.clone())
-            .unwrap_or(create_user(&conn, &profile)?);
+        let user = find_by_email(&conn, profile.email.clone());
 
-        Ok(user)
+        match user {
+            Some(user) => Ok(user),
+            None => {
+                let user = create_user(&conn, &profile)?;
+                Ok(user)
+            }
+        }
     }
 }
 
