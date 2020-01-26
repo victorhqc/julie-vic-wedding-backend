@@ -8,31 +8,35 @@ extern crate serde_derive;
 extern crate gotham_derive;
 
 use dotenv::dotenv;
-use gotham::helpers::http::response::{
-    create_empty_response,
-};
+use gotham::helpers::http::response::create_empty_response;
 use gotham::middleware::state::StateMiddleware;
-use gotham::pipeline::single::single_pipeline;
-use gotham::pipeline::single_middleware;
+use gotham::pipeline::new_pipeline;
+use gotham::pipeline::set::{finalize_pipeline_set, new_pipeline_set};
 use gotham::router::builder::*;
 use gotham::router::Router;
-use gotham::state::{State};
+use gotham::state::State;
+use gotham_middleware_diesel::{self, DieselMiddleware};
+// use diesel_middleware::{DieselMiddleware, Repo};
 use hyper::{Body, Response, StatusCode};
 
-mod api;
+use diesel::PgConnection;
+use diesel::r2d2::{ConnectionManager, PooledConnection};
+
 mod auth;
+mod handlers;
 mod models;
 mod schema;
-mod handlers;
-mod users;
+// mod users;
+mod conduit;
 
-use api::Api;
+use std::env;
 
-use auth::{
-    GoogleRedirectExtractor,
-};
+use auth::GoogleRedirectExtractor;
 
-use handlers::auth::{google_redirect_handler, google_authorize_handler};
+use handlers::auth::{google_authorize_handler, google_redirect_handler};
+
+pub type Repo = gotham_middleware_diesel::Repo<PgConnection>;
+pub type Connection = PooledConnection<ConnectionManager<PgConnection>>;
 
 fn main() {
     dotenv().ok();
@@ -43,19 +47,23 @@ fn main() {
 }
 
 fn router() -> Router {
-    // create the counter to share across handlers
-    let api = Api::connect();
+    let database_url =
+        env::var("DATABASE_URL").unwrap_or("postgresql://postgres@localhost:5432".to_string());
 
-    // create our state middleware to share the counter
-    let middleware = StateMiddleware::new(api);
+    // create a new repo, in this case just using a SQLite setup
+    let repo = Repo::new(&database_url);
 
-    // create a middleware pipeline from our middleware
-    let pipeline = single_middleware(middleware);
+    let pipelines = new_pipeline_set();
+    let (pipelines, default) = pipelines.add(
+        new_pipeline()
+            .add(DieselMiddleware::new(repo))
+            .build(),
+    );
 
-    // construct a basic chain from our pipeline
-    let (chain, pipelines) = single_pipeline(pipeline);
+    let pipeline_set = finalize_pipeline_set(pipelines);
+    let default_chain = (default, ());
 
-    build_router(chain, pipelines, |route| {
+    build_router(default_chain, pipeline_set, |route| {
         route.get_or_head("/").to(index_handler);
 
         route.get("/google/authorize").to(google_authorize_handler);
