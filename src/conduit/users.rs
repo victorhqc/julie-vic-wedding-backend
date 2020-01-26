@@ -1,72 +1,63 @@
-use crate::models::{User, NewUser};
-use crate::schema::users;
-use crate::{Repo, Connection};
 use crate::auth::GoogleProfile;
+use crate::models::{NewUser, User};
+use crate::schema::users;
 
-use anyhow::{Result, Error};
+use crate::Repo;
 use diesel::prelude::*;
 use diesel::result::Error as DieselError;
 use futures::Future;
 use uuid::Uuid;
 
-// use diesel::{RunQueryDsl, insert_into};
-// use diesel::prelude::*;
-
-// use uuid::Uuid;
-//
-// use crate::schema;
-// use crate::models::{User, NewUser};
-// use crate::api::{DBConnection};
-
-pub fn insert(conn: &Connection, new_user: NewUser) -> Result<User>{
-    let result = diesel::insert_into(users::table)
-        .values(&new_user)
-        .get_result(conn)?;
-
-    Ok(result)
+pub fn insert(repo: Repo, new_user: NewUser) -> impl Future<Item = User, Error = DieselError> {
+    repo.run(move |conn| {
+        diesel::insert_into(users::table)
+            .values(&new_user)
+            .get_result(&conn)
+    })
 }
 
-pub fn find_by_email(conn: &Connection, user_email: String) -> Result<Option<User>> {
+pub fn find_by_email(
+    repo: Repo,
+    user_email: String,
+) -> impl Future<Item = User, Error = DieselError> {
     use crate::schema::users::dsl::*;
-
-    let found_user = users
-        .filter(email.eq(user_email))
-        .first::<User>(conn);
-
-    let result = match found_user {
-        Ok(user) => Some(user),
-        Err(_) => None
-    };
-
-    Ok(result)
+    repo.run(|conn| users.filter(email.eq(user_email)).first::<User>(&conn))
 }
 
-pub fn find_or_create_by_profile(conn: &Connection, profile: GoogleProfile) -> Result<User> {
-    let user = find_by_email(conn, profile.email.clone())?;
+// TODO: Reduce code repetition here. I have no idea to implement an elegant solution right now.
+// Maybe when moving to "async" is easy...
+pub fn find_or_create(
+    repo: Repo,
+    profile: GoogleProfile,
+) -> impl Future<Item = User, Error = DieselError> {
+    repo.run(move |conn| {
+        let user = {
+            use crate::schema::users::dsl::*;
 
-    match user {
-        Some(user) => Ok(user),
-        None => {
-            let id = Uuid::new_v4();
-            let new_user = NewUser {
-                id,
-                email: profile.email.clone(),
-                name: profile.given_name.as_ref().unwrap_or(&String::from("")).to_string(),
-                last_name: profile.family_name.clone(),
-            };
+            users
+                .filter(email.eq(profile.email.clone()))
+                .first::<User>(&conn)
+        };
 
-            let user = insert(conn, new_user)?;
-            Ok(user)
+        match user {
+            Ok(u) => Ok(u),
+            Err(_e) => {
+                let id = Uuid::new_v4();
+                let new_user = NewUser {
+                    id,
+                    email: profile.email.clone(),
+                    name: profile
+                        .given_name
+                        .as_ref()
+                        .unwrap_or(&String::from(""))
+                        .to_string(),
+                    last_name: profile.family_name.clone(),
+                };
+
+                diesel::insert_into(users::table)
+                    .values(&new_user)
+                    .get_result(&conn)
+            }
         }
-    }
-}
-
-pub fn find_or_create_byProfile_repo(repo: Repo, profile: GoogleProfile)
-    -> impl Future<Item = User, Error = Error>
-{
-    repo.run(|conn| {
-        let user = find_or_create_by_profile(&conn, profile)?;
-
-        Ok(user)
     })
 }

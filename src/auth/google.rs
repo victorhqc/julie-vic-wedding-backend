@@ -88,7 +88,7 @@ pub struct GoogleRedirectExtractor {
     session_state: String
 }
 
-pub type BasicToken = StandardTokenResponse<EmptyExtraTokenFields, BasicTokenType>;
+type BasicToken = StandardTokenResponse<EmptyExtraTokenFields, BasicTokenType>;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GoogleProfile {
