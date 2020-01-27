@@ -8,38 +8,29 @@ extern crate serde_derive;
 extern crate gotham_derive;
 
 use dotenv::dotenv;
-use gotham::helpers::http::response::create_empty_response;
 use gotham::middleware::logger::RequestLogger;
 use gotham::pipeline::new_pipeline;
 use gotham::pipeline::set::{finalize_pipeline_set, new_pipeline_set};
 use gotham::router::builder::*;
 use gotham::router::Router;
-use gotham::state::State;
 use gotham_middleware_diesel::{self, DieselMiddleware};
 use gotham_middleware_jwt::JWTMiddleware;
-use hyper::{Body, Response, StatusCode};
-
-use diesel::r2d2::{ConnectionManager, PooledConnection};
-use diesel::PgConnection;
 
 mod auth;
 mod conduit;
+mod db;
 mod handlers;
 mod models;
 mod schema;
 
-use std::env;
-
-use auth::{GoogleRedirectExtractor, AuthUser, get_secret};
-
+use db::{Repo, repo};
+use auth::{get_secret, AuthUser, GoogleRedirectExtractor};
+use handlers::index_handler;
 use handlers::auth::{google_authorize_handler, google_redirect_handler};
-
-
-pub type Repo = gotham_middleware_diesel::Repo<PgConnection>;
-pub type Connection = PooledConnection<ConnectionManager<PgConnection>>;
 
 fn main() {
     dotenv().ok();
+    env_logger::init();
 
     let addr = "127.0.0.1:7878";
     println!("Listening for requests at http://{}", addr);
@@ -47,11 +38,7 @@ fn main() {
 }
 
 fn router() -> Router {
-    let database_url =
-        env::var("DATABASE_URL").unwrap_or("postgresql://postgres@localhost:5432".to_string());
-
-    // create a new repo, in this case just using a SQLite setup
-    let repo = Repo::new(&database_url);
+    let repo = repo();
 
     let pipelines = new_pipeline_set();
     let (pipelines, default) = pipelines.add(
@@ -86,10 +73,4 @@ fn router() -> Router {
             });
         })
     })
-}
-
-fn index_handler(state: State) -> (State, Response<Body>) {
-    let res = create_empty_response(&state, StatusCode::OK);
-
-    (state, res)
 }
