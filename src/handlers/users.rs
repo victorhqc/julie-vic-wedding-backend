@@ -48,6 +48,9 @@ pub struct RsvpResponse {
     confirmed_user: ConfirmedUser
 }
 
+// TODO:
+// 1. Make create or update behaviour.
+// 2. Limit date, after it passes, no changes should be allowed.
 pub fn rsvp(mut state: State) -> Box<HandlerFuture> {
     let repo = Repo::borrow_from(&state).clone();
     let token = AuthorizationToken::<AuthUser>::borrow_from(&state);
