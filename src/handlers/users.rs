@@ -19,7 +19,6 @@ pub fn me(state: State) -> Box<HandlerFuture> {
     let repo = Repo::borrow_from(&state).clone();
     let token = AuthorizationToken::<AuthUser>::borrow_from(&state);
     let email = token.0.claims.email();
-    println!("TOKEN {}", token.0.claims.email());
 
     let results = users::find_by_email(repo.clone(), email).then(|result| match result {
         Ok(user) => {
