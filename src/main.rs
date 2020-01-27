@@ -82,6 +82,7 @@ fn router() -> Router {
         route.scope("/api", |route| {
             route.with_pipeline_chain(auth_chain, |route| {
                 route.get("/me").to(handlers::users::me);
+                route.post("/rsvp").to(handlers::users::rsvp);
             });
         })
     })

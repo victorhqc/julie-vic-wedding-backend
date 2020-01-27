@@ -40,7 +40,7 @@ pub fn google_redirect_handler(mut state: State) -> Box<HandlerFuture> {
     let repo = Repo::borrow_from(&state).clone();
     let results = find_or_create(repo, profile).then(|result| match result {
         Ok(user) => {
-            let token = encode_token(user.email.clone(), 3600);
+            let token = encode_token(&user, 3600);
             let response = AuthenticatedUser {
                 user,
                 token,

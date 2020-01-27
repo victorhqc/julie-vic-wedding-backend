@@ -3,17 +3,22 @@ use serde_derive::{Deserialize, Serialize};
 use std::env;
 use std::time::Duration;
 use std::time::{SystemTime, UNIX_EPOCH};
+use uuid::Uuid;
+
+use crate::models::User;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct AuthUser {
     email: String,
+    user_id: String,
     exp: u64,
 }
 
 impl AuthUser {
-    pub fn new(email: String, expire_in: u64) -> Self {
+    pub fn new(user: &User, expire_in: u64) -> Self {
         AuthUser {
-            email: email.clone(),
+            email: user.email.clone(),
+            user_id: user.id.to_string(),
             exp: seconds_from_now(expire_in),
         }
     }
@@ -21,18 +26,22 @@ impl AuthUser {
     pub fn email(&self) -> String {
         self.email.clone()
     }
+
+    pub fn user_id(&self) -> Uuid {
+        Uuid::parse_str(&self.user_id).unwrap()
+    }
 }
 
 pub fn get_secret() -> String {
     env::var("TOKEN_SECRET").expect("TOKEN_SECRET variable is not defined")
 }
 
-pub fn encode_token(email: String, expire_in: u64) -> String {
+pub fn encode_token(user: &User, expire_in: u64) -> String {
     let secret = get_secret();
 
     encode(
         &Header::default(),
-        &AuthUser::new(email, expire_in),
+        &AuthUser::new(user, expire_in),
         secret.as_ref(),
     )
     .unwrap()

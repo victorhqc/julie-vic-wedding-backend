@@ -1,6 +1,7 @@
 table! {
     confirmed_users (user_id) {
         user_id -> Uuid,
+        will_attend -> Bool,
         table_id -> Nullable<Uuid>,
         created_at -> Timestamp,
         updated_at -> Timestamp,

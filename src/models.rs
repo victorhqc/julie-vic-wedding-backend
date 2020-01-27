@@ -47,7 +47,8 @@ pub struct NewTable<'a> {
 #[belongs_to(Table)]
 pub struct ConfirmedUser {
     pub user_id: Uuid,
-    pub table_id: Uuid,
+    pub will_attend: bool,
+    pub table_id: Option<Uuid>,
     #[serde(with = "ts_seconds")]
     pub created_at: NaiveDateTime,
     #[serde(with = "ts_seconds")]
@@ -56,7 +57,8 @@ pub struct ConfirmedUser {
 
 #[derive(Insertable)]
 #[table_name = "confirmed_users"]
-pub struct NewConfirmedUser<'a> {
-    pub user_id: &'a Uuid,
-    pub table_id: &'a Uuid,
+pub struct NewConfirmedUser {
+    pub user_id: Uuid,
+    pub will_attend: bool,
+    pub table_id: Option<Uuid>,
 }
