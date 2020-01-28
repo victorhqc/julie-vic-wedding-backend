@@ -3,7 +3,7 @@ use gotham::handler::{HandlerFuture, IntoHandlerError};
 use gotham::helpers::http::response::{create_empty_response, create_response};
 use gotham::state::{FromState, State};
 use gotham_middleware_jwt::AuthorizationToken;
-use hyper::{StatusCode};
+use hyper::StatusCode;
 
 use crate::handlers::extract_json;
 use crate::auth::AuthUser;
@@ -48,9 +48,6 @@ pub struct RsvpResponse {
     confirmed_user: ConfirmedUser
 }
 
-// TODO:
-// 1. Make create or update behaviour.
-// 2. Limit date, after it passes, no changes should be allowed.
 pub fn rsvp(mut state: State) -> Box<HandlerFuture> {
     let repo = Repo::borrow_from(&state).clone();
     let token = AuthorizationToken::<AuthUser>::borrow_from(&state);

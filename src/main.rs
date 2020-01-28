@@ -20,13 +20,15 @@ mod auth;
 mod conduit;
 mod db;
 mod handlers;
+mod middlewares;
 mod models;
 mod schema;
 
-use db::{Repo, repo};
 use auth::{get_secret, AuthUser, GoogleRedirectExtractor};
-use handlers::index_handler;
+use db::{repo, Repo};
 use handlers::auth::{google_authorize_handler, google_redirect_handler};
+use handlers::index_handler;
+use middlewares::rsvp::RsvpDateMiddleware;
 
 fn main() {
     dotenv().ok();
@@ -52,10 +54,16 @@ fn router() -> Router {
             .add(JWTMiddleware::<AuthUser>::new(get_secret()).scheme("Bearer"))
             .build(),
     );
+    let (pipelines, rsvp_check) = pipelines.add(
+        new_pipeline()
+            .add(RsvpDateMiddleware)
+            .build(),
+    );
 
     let pipeline_set = finalize_pipeline_set(pipelines);
     let default_chain = (default, ());
     let auth_chain = (authenticated, default_chain);
+    let rsvp_chain = (rsvp_check, auth_chain);
 
     build_router(default_chain, pipeline_set, |route| {
         route.get_or_head("/").to(index_handler);
@@ -69,6 +77,9 @@ fn router() -> Router {
         route.scope("/api", |route| {
             route.with_pipeline_chain(auth_chain, |route| {
                 route.get("/me").to(handlers::users::me);
+            });
+
+            route.with_pipeline_chain(rsvp_chain, |route| {
                 route.post("/rsvp").to(handlers::users::rsvp);
             });
         })

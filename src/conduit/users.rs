@@ -41,7 +41,7 @@ pub fn find_or_create(
 
         match user {
             Ok(u) => Ok(u),
-            Err(_e) => {
+            Err(_) => {
                 let id = Uuid::new_v4();
                 let new_user = NewUser {
                     id,
@@ -66,8 +66,21 @@ pub fn rsvp_confirmation(repo: Repo, confirmed_user: NewConfirmedUser)
     -> impl Future<Item = ConfirmedUser, Error = DieselError>
 {
     repo.run(move |conn| {
-        diesel::insert_into(confirmed_users::table)
-            .values(&confirmed_user)
-            .get_result(&conn)
+        let existing = {
+            use crate::schema::confirmed_users::dsl::*;
+
+            diesel::update(confirmed_users.find(confirmed_user.user_id))
+                .set(will_attend.eq(confirmed_user.will_attend))
+                .get_result::<ConfirmedUser>(&conn)
+        };
+
+        match existing {
+            Ok(e) => Ok(e),
+            Err(_) => {
+                diesel::insert_into(confirmed_users::table)
+                    .values(&confirmed_user)
+                    .get_result(&conn)
+            }
+        }
     })
 }
