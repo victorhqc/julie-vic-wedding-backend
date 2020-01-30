@@ -10,6 +10,7 @@ use crate::auth::AuthUser;
 use crate::conduit::users;
 use crate::models::{User, NewConfirmedUser, ConfirmedUser};
 use crate::Repo;
+use crate::custom_types::AttendStatus;
 
 #[derive(Serialize)]
 pub struct UserResponse {
@@ -40,7 +41,8 @@ pub fn me(state: State) -> Box<HandlerFuture> {
 
 #[derive(Deserialize)]
 pub struct RsvpRequest {
-    will_attend: bool
+    will_attend: bool,
+    plus_one: bool,
 }
 
 #[derive(Serialize)]
@@ -58,7 +60,7 @@ pub fn rsvp(mut state: State) -> Box<HandlerFuture> {
             let will_attend = body.will_attend;
             let confirmed_user = NewConfirmedUser {
                 user_id,
-                will_attend,
+                status: get_attend_status(&body),
                 table_id: None,
             };
 
@@ -80,4 +82,12 @@ pub fn rsvp(mut state: State) -> Box<HandlerFuture> {
         });
 
     Box::new(f)
+}
+
+fn get_attend_status(req: &RsvpRequest) -> AttendStatus {
+    match (req.will_attend, req.plus_one) {
+        (false, _) => AttendStatus::No,
+        (true, false) => AttendStatus::Yes,
+        (true, true) => AttendStatus::YesPlusOne,
+    }
 }

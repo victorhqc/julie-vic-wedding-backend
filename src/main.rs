@@ -23,6 +23,7 @@ mod handlers;
 mod middlewares;
 mod models;
 mod schema;
+mod attend_status_type;
 
 use auth::{get_secret, AuthUser, GoogleRedirectExtractor};
 use db::{repo, Repo};

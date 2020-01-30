@@ -1,8 +1,9 @@
 use crate::auth::GoogleProfile;
-use crate::models::{NewUser, User, NewConfirmedUser, ConfirmedUser};
-use crate::schema::{users, confirmed_users};
+use crate::models::{ConfirmedUser, NewConfirmedUser, NewUser, User};
+// use crate::schema::{users, confirmed_users};
+use crate::schema::*;
 
-use crate::Repo;
+use crate::db::Repo;
 use diesel::prelude::*;
 use diesel::result::Error as DieselError;
 use futures::Future;
@@ -62,9 +63,10 @@ pub fn find_or_create(
     })
 }
 
-pub fn rsvp_confirmation(repo: Repo, confirmed_user: NewConfirmedUser)
-    -> impl Future<Item = ConfirmedUser, Error = DieselError>
-{
+pub fn rsvp_confirmation(
+    repo: Repo,
+    confirmed_user: NewConfirmedUser,
+) -> impl Future<Item = ConfirmedUser, Error = DieselError> {
     repo.run(move |conn| {
         let existing = {
             use crate::schema::confirmed_users::dsl::*;
@@ -76,11 +78,9 @@ pub fn rsvp_confirmation(repo: Repo, confirmed_user: NewConfirmedUser)
 
         match existing {
             Ok(e) => Ok(e),
-            Err(_) => {
-                diesel::insert_into(confirmed_users::table)
-                    .values(&confirmed_user)
-                    .get_result(&conn)
-            }
+            Err(_) => diesel::insert_into(confirmed_users::table)
+                .values(&confirmed_user)
+                .get_result(&conn),
         }
     })
 }

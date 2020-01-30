@@ -1,4 +1,4 @@
--- Your SQL goes here
+CREATE TYPE attend_status as ENUM ('no', 'yes', 'yes+one');
 
 CREATE TABLE users (
   id UUID PRIMARY KEY NOT NULL,
@@ -19,7 +19,7 @@ CREATE TABLE tables (
 
 CREATE TABLE confirmed_users (
   user_id UUID NOT NULL,
-  will_attend BOOLEAN NOT NULL DEFAULT false,
+  will_attend attend_status NOT NULL,
   table_id UUID NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,

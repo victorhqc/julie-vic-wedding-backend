@@ -1,4 +1,5 @@
 use super::schema::{confirmed_users, tables, users};
+use crate::attend_status_type::AttendStatus;
 use chrono::naive::serde::ts_seconds;
 use chrono::NaiveDateTime;
 use serde_derive::Serialize;
@@ -23,7 +24,7 @@ pub struct NewUser {
     pub id: Uuid,
     pub name: String,
     pub last_name: Option<String>,
-    pub email: String
+    pub email: String,
 }
 
 #[derive(Debug, Serialize, Queryable, Identifiable)]
@@ -42,12 +43,13 @@ pub struct NewTable<'a> {
     pub alias: Option<&'a str>,
 }
 
-#[derive(Debug, Serialize, Queryable, Associations)]
+#[derive(Debug, Serialize, Queryable, Associations, PartialEq)]
+#[table_name = "confirmed_users"]
 #[belongs_to(User)]
 #[belongs_to(Table)]
 pub struct ConfirmedUser {
     pub user_id: Uuid,
-    pub will_attend: bool,
+    pub will_attend: AttendStatus,
     pub table_id: Option<Uuid>,
     #[serde(with = "ts_seconds")]
     pub created_at: NaiveDateTime,
@@ -59,6 +61,6 @@ pub struct ConfirmedUser {
 #[table_name = "confirmed_users"]
 pub struct NewConfirmedUser {
     pub user_id: Uuid,
-    pub will_attend: bool,
+    pub will_attend: AttendStatus,
     pub table_id: Option<Uuid>,
 }
