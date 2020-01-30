@@ -20,7 +20,12 @@ docker run -it --rm --name julie-vic -p 5432:5432 postgres
 Run migrations
 
 ```sh
+# When bootstraping the project (so schema file doesn't get overwritten)
+diesel migration run --locked-schema
+
+# Whenever a new migration gets added.
 diesel migration run
+
 ```
 
 Run in development mode.
