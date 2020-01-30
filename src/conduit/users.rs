@@ -72,7 +72,7 @@ pub fn rsvp_confirmation(
             use crate::schema::confirmed_users::dsl::*;
 
             diesel::update(confirmed_users.find(confirmed_user.user_id))
-                .set(will_attend.eq(confirmed_user.will_attend))
+                .set(will_attend.eq(&confirmed_user.will_attend))
                 .get_result::<ConfirmedUser>(&conn)
         };
 
