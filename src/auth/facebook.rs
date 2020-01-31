@@ -2,10 +2,9 @@ use anyhow::Result;
 use http::{header::AUTHORIZATION, HeaderMap, HeaderValue};
 use oauth2::prelude::*;
 use oauth2::{
-    RequestTokenError,
     basic::{BasicClient, BasicTokenType},
     AuthUrl, AuthorizationCode, ClientId, ClientSecret, CsrfToken, EmptyExtraTokenFields,
-    RedirectUrl, Scope, StandardTokenResponse, TokenResponse, TokenUrl,
+    RedirectUrl, RequestTokenError, Scope, StandardTokenResponse, TokenResponse, TokenUrl,
 };
 use std::env;
 use std::str;
@@ -59,30 +58,32 @@ pub fn exchange_facebook_token(
 
     match token {
         Ok(token) => token,
-        Err(e) => {
-            match e {
-                RequestTokenError::Parse(e, v) => {
-                    println!("E: {:?}", e);
-                    println!("V: {}", str::from_utf8(&v).unwrap());
-                    panic!("Can't parse exchange token!");
-                },
-                _ => {
-                    println!("{:?}", e);
-                    panic!("Can't exchange token!");
-                }
+        Err(e) => match e {
+            RequestTokenError::Parse(e, v) => {
+                println!("E: {:?}", e);
+                println!("V: {}", str::from_utf8(&v).unwrap());
+                panic!("Can't parse exchange token!");
             }
-        }
+            _ => {
+                println!("{:?}", e);
+                panic!("Can't exchange token!");
+            }
+        },
     }
 }
 
 pub fn get_facebook_user_profile(token: &BasicToken) -> Result<FacebookProfile> {
-    let token_header = format!("Bearer {}", token.access_token().secret());
+    // let token_header = format!("Bearer {}", token.access_token().secret());
 
-    let mut headers = HeaderMap::new();
-    headers.insert(AUTHORIZATION, HeaderValue::from_str(&token_header).unwrap());
+    let headers = HeaderMap::new();
+    // headers.insert(AUTHORIZATION, HeaderValue::from_str(&token_header).unwrap());
 
-    let url = String::from("https://www.facebook.com/oauth2/v1/userinfo?alt=json");
+    let url = String::from(format!(
+        "https://graph.facebook.com/me?fields=id,first_name,last_name,middle_name,gender,picture,email&access_token={}",
+        token.access_token().secret()
+    ));
 
+    println!("{}", url);
     let client = reqwest::Client::new();
     let mut response = client.get(&url).headers(headers).send()?;
 
@@ -94,7 +95,7 @@ pub fn get_facebook_user_profile(token: &BasicToken) -> Result<FacebookProfile> 
 #[derive(Deserialize, Serialize, StateData, StaticResponseExtender)]
 pub struct FacebookRedirectExtractor {
     code: String,
-    state: String
+    state: String,
 }
 
 type BasicToken = StandardTokenResponse<EmptyExtraTokenFields, BasicTokenType>;
@@ -103,10 +104,22 @@ type BasicToken = StandardTokenResponse<EmptyExtraTokenFields, BasicTokenType>;
 pub struct FacebookProfile {
     pub id: String,
     pub email: String,
-    pub family_name: Option<String>,
+    pub first_name: String,
+    pub middle_name: Option<String>,
+    pub last_name: Option<String>,
     pub gender: Option<String>,
-    pub given_name: Option<String>,
-    pub locale: Option<String>,
-    pub picture: Option<String>,
-    pub verified_email: bool,
+    pub picture: Option<ProfilePicture>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ProfilePicture {
+    pub data: PictureData,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PictureData {
+    pub height: i32,
+    pub width: i32,
+    pub is_silhouette: bool,
+    pub url: String,
 }

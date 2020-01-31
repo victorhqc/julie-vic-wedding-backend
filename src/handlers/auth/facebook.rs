@@ -34,9 +34,9 @@ pub fn facebook_redirect_handler(mut state: State) -> Box<HandlerFuture> {
     let query_param = FacebookRedirectExtractor::take_from(&mut state);
     let facebook_client = build_facebook_client();
     let token = exchange_facebook_token(&query_param, &facebook_client);
-    // let profile = get_google_user_profile(&token).expect("Couldn't get user's profile");
+    let profile = get_facebook_user_profile(&token).expect("Couldn't get user's profile");
 
-    let body = serde_json::to_string(&token).expect("Failed to serialize token.");
+    let body = serde_json::to_string(&profile).expect("Failed to serialize token.");
     let res = create_response(&state, StatusCode::OK, mime::APPLICATION_JSON, body);
 
     let f = future::ok((state, res));
