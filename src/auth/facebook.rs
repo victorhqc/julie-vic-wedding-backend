@@ -2,15 +2,15 @@ use anyhow::Result;
 use http::HeaderMap;
 use oauth2::prelude::*;
 use oauth2::{
-    basic::{BasicClient, BasicTokenType},
-    AuthUrl, AuthorizationCode, ClientId, ClientSecret, CsrfToken, EmptyExtraTokenFields,
-    RedirectUrl, RequestTokenError, Scope, StandardTokenResponse, TokenResponse, TokenUrl,
+    basic::{BasicClient},
+    AuthUrl, AuthorizationCode, ClientId, ClientSecret, CsrfToken,
+    RedirectUrl, RequestTokenError, Scope, TokenResponse, TokenUrl,
 };
 use std::env;
 use std::str;
 use url::Url;
 
-use super::Profile;
+use super::{Profile, BasicToken};
 use crate::models::NewUser;
 use crate::utils::get_url;
 
@@ -95,8 +95,6 @@ pub struct FacebookRedirectExtractor {
     code: String,
     state: String,
 }
-
-type BasicToken = StandardTokenResponse<EmptyExtraTokenFields, BasicTokenType>;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct FacebookProfile {
