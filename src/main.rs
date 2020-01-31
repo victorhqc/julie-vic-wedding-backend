@@ -16,6 +16,7 @@ use gotham::router::Router;
 use gotham_middleware_diesel::{self, DieselMiddleware};
 use gotham_middleware_jwt::JWTMiddleware;
 
+mod attend_status_type;
 mod auth;
 mod conduit;
 mod db;
@@ -23,11 +24,13 @@ mod handlers;
 mod middlewares;
 mod models;
 mod schema;
-mod attend_status_type;
 
-use auth::{get_secret, AuthUser, GoogleRedirectExtractor};
+use auth::{get_secret, AuthUser, GoogleRedirectExtractor, FacebookRedirectExtractor};
 use db::{repo, Repo};
-use handlers::auth::{google_authorize_handler, google_redirect_handler};
+use handlers::auth::{
+    facebook_authorize_handler, facebook_redirect_handler, google_authorize_handler,
+    google_redirect_handler,
+};
 use handlers::index_handler;
 use middlewares::rsvp::RsvpDateMiddleware;
 
@@ -55,11 +58,7 @@ fn router() -> Router {
             .add(JWTMiddleware::<AuthUser>::new(get_secret()).scheme("Bearer"))
             .build(),
     );
-    let (pipelines, rsvp_check) = pipelines.add(
-        new_pipeline()
-            .add(RsvpDateMiddleware)
-            .build(),
-    );
+    let (pipelines, rsvp_check) = pipelines.add(new_pipeline().add(RsvpDateMiddleware).build());
 
     let pipeline_set = finalize_pipeline_set(pipelines);
     let default_chain = (default, ());
@@ -74,6 +73,12 @@ fn router() -> Router {
             .get("/google/redirect")
             .with_query_string_extractor::<GoogleRedirectExtractor>()
             .to(google_redirect_handler);
+
+        route.get("/facebook/authorize").to(facebook_authorize_handler);
+        route
+            .get("/facebook/redirect")
+            .with_query_string_extractor::<FacebookRedirectExtractor>()
+            .to(facebook_redirect_handler);
 
         route.scope("/api", |route| {
             route.with_pipeline_chain(auth_chain, |route| {

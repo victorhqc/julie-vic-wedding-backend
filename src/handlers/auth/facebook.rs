@@ -1,0 +1,63 @@
+use futures::{future, Future};
+use gotham::handler::HandlerFuture;
+use gotham::helpers::http::response::{
+    create_empty_response, create_response, create_temporary_redirect,
+};
+use gotham::state::{FromState, State};
+use hyper::{Body, Response, StatusCode};
+
+use crate::auth::{
+    build_facebook_client, encode_token, exchange_facebook_token, gen_facebook_authorize_url,
+    get_facebook_user_profile, FacebookRedirectExtractor,
+};
+
+use crate::conduit::users::find_or_create;
+use crate::models::User;
+use crate::Repo;
+
+#[derive(Serialize)]
+struct AuthenticatedUser {
+    user: User,
+    token: String,
+}
+
+pub fn facebook_authorize_handler(state: State) -> (State, Response<Body>) {
+    let facebook_client = build_facebook_client();
+    let (authorize_url, _) = gen_facebook_authorize_url(facebook_client);
+
+    let res = create_temporary_redirect(&state, authorize_url.to_string());
+
+    (state, res)
+}
+
+pub fn facebook_redirect_handler(mut state: State) -> Box<HandlerFuture> {
+    let query_param = FacebookRedirectExtractor::take_from(&mut state);
+    let facebook_client = build_facebook_client();
+    let token = exchange_facebook_token(&query_param, &facebook_client);
+    // let profile = get_google_user_profile(&token).expect("Couldn't get user's profile");
+
+    let body = serde_json::to_string(&token).expect("Failed to serialize token.");
+    let res = create_response(&state, StatusCode::OK, mime::APPLICATION_JSON, body);
+
+    let f = future::ok((state, res));
+    Box::new(f)
+
+
+    // let repo = Repo::borrow_from(&state).clone();
+    // let results = find_or_create(repo, profile).then(|result| match result {
+    //     Ok(user) => {
+    //         let token = encode_token(&user, 3600);
+    //         let response = AuthenticatedUser { user, token };
+    //
+    //         let body = serde_json::to_string(&response).expect("Failed to serialize user.");
+    //         let res = create_response(&state, StatusCode::OK, mime::APPLICATION_JSON, body);
+    //         future::ok((state, res))
+    //     }
+    //     Err(_e) => {
+    //         let res = create_empty_response(&state, StatusCode::INTERNAL_SERVER_ERROR);
+    //         future::ok((state, res))
+    //     }
+    // });
+
+    // Box::new(results)
+}

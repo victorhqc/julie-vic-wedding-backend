@@ -1,13 +1,14 @@
+use anyhow::Result;
+use http::{header::AUTHORIZATION, HeaderMap, HeaderValue};
 use oauth2::prelude::*;
 use oauth2::{
-    AuthUrl, AuthorizationCode, ClientId, ClientSecret, CsrfToken, RedirectUrl, Scope, TokenUrl,
-    TokenResponse,
-    basic::{BasicClient, BasicTokenType}, StandardTokenResponse, EmptyExtraTokenFields
+    basic::{BasicClient, BasicTokenType},
+    AuthUrl, AuthorizationCode, ClientId, ClientSecret, CsrfToken, EmptyExtraTokenFields,
+    RedirectUrl, Scope, StandardTokenResponse, TokenResponse, TokenUrl,
 };
 use std::env;
 use url::Url;
-use anyhow::Result;
-use http::{HeaderMap, HeaderValue, header::{AUTHORIZATION}};
+use super::get_url;
 
 const GOOGLE_PEOPLE_ENDPOINT: &'static str = "https://www.googleapis.com";
 
@@ -35,24 +36,28 @@ pub fn build_google_client() -> BasicClient {
         google_client_id,
         Some(google_client_secret),
         auth_url,
-        Some(token_url)
+        Some(token_url),
     )
     .add_scope(Scope::new(
-        "https://www.googleapis.com/auth/userinfo.email".to_string()
+        "https://www.googleapis.com/auth/userinfo.email".to_string(),
     ))
     .add_scope(Scope::new(
-        "https://www.googleapis.com/auth/userinfo.profile".to_string()
+        "https://www.googleapis.com/auth/userinfo.profile".to_string(),
     ))
     .set_redirect_url(RedirectUrl::new(
-        Url::parse("http://localhost:7878/google/redirect").expect("Invalid redirect URL"),
+        Url::parse(format!("{}/google/redirect", get_url()).as_ref())
+            .expect("Invalid redirect URL"),
     ))
 }
 
-pub fn gen_authorize_url(client: BasicClient) -> (url::Url, CsrfToken) {
+pub fn gen_google_authorize_url(client: BasicClient) -> (url::Url, CsrfToken) {
     client.authorize_url(CsrfToken::new_random)
 }
 
-pub fn exchange_token(extractor: &GoogleRedirectExtractor, client: &BasicClient) -> BasicToken {
+pub fn exchange_google_token(
+    extractor: &GoogleRedirectExtractor,
+    client: &BasicClient,
+) -> BasicToken {
     let code = AuthorizationCode::new(extractor.code.to_owned());
 
     let token = client.exchange_code(code).expect("Couldn't exchange token");
@@ -60,7 +65,7 @@ pub fn exchange_token(extractor: &GoogleRedirectExtractor, client: &BasicClient)
     token
 }
 
-pub fn get_user_profile(token: &BasicToken) -> Result<GoogleProfile> {
+pub fn get_google_user_profile(token: &BasicToken) -> Result<GoogleProfile> {
     let token_header = format!("Bearer {}", token.access_token().secret());
 
     let mut headers = HeaderMap::new();
@@ -69,10 +74,7 @@ pub fn get_user_profile(token: &BasicToken) -> Result<GoogleProfile> {
     let url = format!("{}/oauth2/v1/userinfo?alt=json", GOOGLE_PEOPLE_ENDPOINT);
 
     let client = reqwest::Client::new();
-    let mut response = client
-        .get(&url)
-        .headers(headers)
-        .send()?;
+    let mut response = client.get(&url).headers(headers).send()?;
 
     let profile: GoogleProfile = response.json()?;
 
@@ -85,7 +87,7 @@ pub struct GoogleRedirectExtractor {
     code: String,
     scope: Vec<String>,
     prompt: String,
-    session_state: String
+    session_state: String,
 }
 
 type BasicToken = StandardTokenResponse<EmptyExtraTokenFields, BasicTokenType>;
