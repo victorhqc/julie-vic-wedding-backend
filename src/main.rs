@@ -24,8 +24,11 @@ mod handlers;
 mod middlewares;
 mod models;
 mod schema;
+mod utils;
 
-use auth::{get_secret, AuthUser, GoogleRedirectExtractor, FacebookRedirectExtractor};
+use auth::facebook::FacebookRedirectExtractor;
+use auth::google::GoogleRedirectExtractor;
+use auth::{get_secret, AuthUser};
 use db::{repo, Repo};
 use handlers::auth::{
     facebook_authorize_handler, facebook_redirect_handler, google_authorize_handler,
@@ -74,7 +77,9 @@ fn router() -> Router {
             .with_query_string_extractor::<GoogleRedirectExtractor>()
             .to(google_redirect_handler);
 
-        route.get("/facebook/authorize").to(facebook_authorize_handler);
+        route
+            .get("/facebook/authorize")
+            .to(facebook_authorize_handler);
         route
             .get("/facebook/redirect")
             .with_query_string_extractor::<FacebookRedirectExtractor>()

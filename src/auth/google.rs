@@ -8,11 +8,14 @@ use oauth2::{
 };
 use std::env;
 use url::Url;
-use super::get_url;
+
+use crate::utils::get_url;
+use crate::models::NewUser;
+use super::Profile;
 
 const GOOGLE_PEOPLE_ENDPOINT: &'static str = "https://www.googleapis.com";
 
-pub fn build_google_client() -> BasicClient {
+pub fn build_client() -> BasicClient {
     let google_client_id = ClientId::new(
         env::var("GOOGLE_CLIENT_ID").expect("Missing GOOGLE_CLIENT_ID environment variable."),
     );
@@ -50,22 +53,16 @@ pub fn build_google_client() -> BasicClient {
     ))
 }
 
-pub fn gen_google_authorize_url(client: BasicClient) -> (url::Url, CsrfToken) {
+pub fn gen_authorize_url(client: BasicClient) -> (url::Url, CsrfToken) {
     client.authorize_url(CsrfToken::new_random)
 }
 
-pub fn exchange_google_token(
-    extractor: &GoogleRedirectExtractor,
-    client: &BasicClient,
-) -> BasicToken {
+pub fn exchange_token(extractor: &GoogleRedirectExtractor, client: &BasicClient) -> BasicToken {
     let code = AuthorizationCode::new(extractor.code.to_owned());
-
-    let token = client.exchange_code(code).expect("Couldn't exchange token");
-
-    token
+    client.exchange_code(code).expect("Couldn't exchange token")
 }
 
-pub fn get_google_user_profile(token: &BasicToken) -> Result<GoogleProfile> {
+pub fn get_user_profile(token: &BasicToken) -> Result<GoogleProfile> {
     let token_header = format!("Bearer {}", token.access_token().secret());
 
     let mut headers = HeaderMap::new();
@@ -94,12 +91,22 @@ type BasicToken = StandardTokenResponse<EmptyExtraTokenFields, BasicTokenType>;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GoogleProfile {
-    pub id: String,
-    pub email: String,
-    pub family_name: Option<String>,
-    pub gender: Option<String>,
-    pub given_name: Option<String>,
-    pub locale: Option<String>,
-    pub picture: Option<String>,
-    pub verified_email: bool,
+    id: String,
+    email: String,
+    family_name: Option<String>,
+    gender: Option<String>,
+    given_name: Option<String>,
+    locale: Option<String>,
+    picture: Option<String>,
+    verified_email: bool,
+}
+
+impl Profile for GoogleProfile {
+    fn new_user(&self) -> NewUser {
+        let name = self.given_name.as_ref().unwrap_or(&String::from("")).to_string();
+        let family_name = self.family_name.clone();
+        let email = self.email.clone();
+
+        NewUser::new(name, family_name, email)
+    }
 }

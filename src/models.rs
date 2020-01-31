@@ -27,6 +27,17 @@ pub struct NewUser {
     pub email: String,
 }
 
+impl NewUser {
+    pub fn new(name: String, last_name: Option<String>, email: String) -> Self {
+        NewUser {
+            id: Uuid::new_v4(),
+            name,
+            last_name,
+            email,
+        }
+    }
+}
+
 #[derive(Debug, Serialize, Queryable, Identifiable)]
 #[table_name = "tables"]
 pub struct Table {

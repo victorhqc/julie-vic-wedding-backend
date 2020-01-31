@@ -1,5 +1,5 @@
 use anyhow::Result;
-use http::{header::AUTHORIZATION, HeaderMap, HeaderValue};
+use http::HeaderMap;
 use oauth2::prelude::*;
 use oauth2::{
     basic::{BasicClient, BasicTokenType},
@@ -10,9 +10,11 @@ use std::env;
 use std::str;
 use url::Url;
 
-use super::get_url;
+use super::Profile;
+use crate::models::NewUser;
+use crate::utils::get_url;
 
-pub fn build_facebook_client() -> BasicClient {
+pub fn build_client() -> BasicClient {
     let facebook_client_id = ClientId::new(
         env::var("FACEBOOK_CLIENT_ID").expect("Missing FACEBOOK_CLIENT_ID environment variable."),
     );
@@ -45,14 +47,11 @@ pub fn build_facebook_client() -> BasicClient {
     ))
 }
 
-pub fn gen_facebook_authorize_url(client: BasicClient) -> (url::Url, CsrfToken) {
+pub fn gen_authorize_url(client: BasicClient) -> (url::Url, CsrfToken) {
     client.authorize_url(CsrfToken::new_random)
 }
 
-pub fn exchange_facebook_token(
-    extractor: &FacebookRedirectExtractor,
-    client: &BasicClient,
-) -> BasicToken {
+pub fn exchange_token(extractor: &FacebookRedirectExtractor, client: &BasicClient) -> BasicToken {
     let code = AuthorizationCode::new(extractor.code.to_owned());
     let token = client.exchange_code(code);
 
@@ -72,14 +71,13 @@ pub fn exchange_facebook_token(
     }
 }
 
-pub fn get_facebook_user_profile(token: &BasicToken) -> Result<FacebookProfile> {
-    // let token_header = format!("Bearer {}", token.access_token().secret());
-
+pub fn get_user_profile(token: &BasicToken) -> Result<FacebookProfile> {
     let headers = HeaderMap::new();
-    // headers.insert(AUTHORIZATION, HeaderValue::from_str(&token_header).unwrap());
+    let fields = "id,first_name,last_name,middle_name,gender,picture,email";
 
     let url = String::from(format!(
-        "https://graph.facebook.com/me?fields=id,first_name,last_name,middle_name,gender,picture,email&access_token={}",
+        "https://graph.facebook.com/me?fields={}&access_token={}",
+        fields,
         token.access_token().secret()
     ));
 
@@ -122,4 +120,14 @@ pub struct PictureData {
     pub width: i32,
     pub is_silhouette: bool,
     pub url: String,
+}
+
+impl Profile for FacebookProfile {
+    fn new_user(&self) -> NewUser {
+        let first_name = self.first_name.clone();
+        let last_name = self.last_name.clone();
+        let email = self.email.clone();
+
+        NewUser::new(first_name, last_name, email)
+    }
 }
