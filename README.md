@@ -1,11 +1,11 @@
 # julie-vic-wedding-backend
-Jule & Vic Wedding Backend
 
+Julie & Vic Wedding Backend
 
 ## Requirements
 
--   Rust >= 1.40.0
--   Docker (For development)
+- Rust >= 1.40.0
+- Docker (For development)
 
 ## Development
 
