@@ -22,7 +22,7 @@ pub fn me(state: State) -> Box<HandlerFuture> {
     let token = AuthorizationToken::<AuthUser>::borrow_from(&state);
     let email = token.0.claims.email();
 
-    let results = users::find_by_email(repo.clone(), email).then(|result| match result {
+    let results = users::find_by_email(repo, email).then(|result| match result {
         Ok(user) => {
             let response = UserResponse { user };
             let body = serde_json::to_string(&response).expect("Failed to serialize user.");
