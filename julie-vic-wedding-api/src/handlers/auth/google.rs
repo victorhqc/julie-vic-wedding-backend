@@ -5,14 +5,13 @@ use gotham::helpers::http::response::{
 };
 use gotham::state::{FromState, State};
 use hyper::{Body, Response, StatusCode};
+use julie_vic_wedding_core::models::User;
 
 use crate::auth::encode_token;
 use crate::auth::google::{
     build_client, exchange_token, gen_authorize_url, get_user_profile, GoogleRedirectExtractor,
 };
-
 use crate::conduit::users::find_or_create;
-use crate::models::User;
 use crate::Repo;
 
 #[derive(Serialize)]

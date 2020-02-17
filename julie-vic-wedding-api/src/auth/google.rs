@@ -1,5 +1,6 @@
 use anyhow::Result;
 use http::{header::AUTHORIZATION, HeaderMap, HeaderValue};
+use julie_vic_wedding_core::models::NewUser;
 use oauth2::prelude::*;
 use oauth2::{
     basic::{BasicClient, BasicTokenType},
@@ -9,9 +10,8 @@ use oauth2::{
 use std::env;
 use url::Url;
 
-use crate::utils::get_url;
-use crate::models::NewUser;
 use super::Profile;
+use crate::utils::get_url;
 
 const GOOGLE_PEOPLE_ENDPOINT: &'static str = "https://www.googleapis.com";
 
@@ -103,7 +103,11 @@ pub struct GoogleProfile {
 
 impl Profile for GoogleProfile {
     fn new_user(&self) -> NewUser {
-        let name = self.given_name.as_ref().unwrap_or(&String::from("")).to_string();
+        let name = self
+            .given_name
+            .as_ref()
+            .unwrap_or(&String::from(""))
+            .to_string();
         let family_name = self.family_name.clone();
         let email = self.email.clone();
 

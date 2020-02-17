@@ -1,7 +1,4 @@
 #[macro_use]
-extern crate diesel;
-
-#[macro_use]
 extern crate serde_derive;
 
 #[macro_use]
@@ -16,14 +13,11 @@ use gotham::router::Router;
 use gotham_middleware_diesel::{self, DieselMiddleware};
 use gotham_middleware_jwt::JWTMiddleware;
 
-mod attend_status_type;
 mod auth;
 mod conduit;
 mod db;
 mod handlers;
 mod middlewares;
-mod models;
-mod schema;
 mod utils;
 
 use auth::facebook::FacebookRedirectExtractor;

@@ -1,17 +1,16 @@
 use anyhow::Result;
 use http::HeaderMap;
+use julie_vic_wedding_core::models::NewUser;
 use oauth2::prelude::*;
 use oauth2::{
-    basic::{BasicClient},
-    AuthUrl, AuthorizationCode, ClientId, ClientSecret, CsrfToken,
-    RedirectUrl, RequestTokenError, Scope, TokenResponse, TokenUrl,
+    basic::BasicClient, AuthUrl, AuthorizationCode, ClientId, ClientSecret, CsrfToken, RedirectUrl,
+    RequestTokenError, Scope, TokenResponse, TokenUrl,
 };
 use std::env;
 use std::str;
 use url::Url;
 
-use super::{Profile, BasicToken};
-use crate::models::NewUser;
+use super::{BasicToken, Profile};
 use crate::utils::get_url;
 
 pub fn build_client() -> BasicClient {

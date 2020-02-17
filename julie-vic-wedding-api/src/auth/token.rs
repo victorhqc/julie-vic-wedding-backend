@@ -1,11 +1,10 @@
 use jsonwebtoken::{encode, Header};
+use julie_vic_wedding_core::models::User;
 use serde_derive::{Deserialize, Serialize};
 use std::env;
 use std::time::Duration;
 use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
-
-use crate::models::User;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct AuthUser {

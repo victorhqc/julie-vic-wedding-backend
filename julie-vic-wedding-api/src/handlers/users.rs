@@ -5,12 +5,12 @@ use gotham::state::{FromState, State};
 use gotham_middleware_jwt::AuthorizationToken;
 use hyper::StatusCode;
 
-use crate::handlers::extract_json;
 use crate::auth::AuthUser;
 use crate::conduit::users;
-use crate::models::{User, NewConfirmedUser, ConfirmedUser};
+use crate::handlers::extract_json;
 use crate::Repo;
-use crate::attend_status_type::AttendStatus;
+use julie_vic_wedding_core::attend_status_type::AttendStatus;
+use julie_vic_wedding_core::models::{ConfirmedUser, NewConfirmedUser, User};
 
 #[derive(Serialize)]
 pub struct UserResponse {
@@ -47,7 +47,7 @@ pub struct RsvpRequest {
 
 #[derive(Serialize)]
 pub struct RsvpResponse {
-    confirmed_user: ConfirmedUser
+    confirmed_user: ConfirmedUser,
 }
 
 pub fn rsvp(mut state: State) -> Box<HandlerFuture> {
@@ -64,10 +64,10 @@ pub fn rsvp(mut state: State) -> Box<HandlerFuture> {
             };
 
             users::rsvp_confirmation(repo, confirmed_user).map_err(|e| match e {
-                diesel::result::Error::DatabaseError(_, _) => {
-                    e.into_handler_error().with_status(StatusCode::INTERNAL_SERVER_ERROR)
-                },
-                _ => e.into_handler_error().with_status(StatusCode::BAD_REQUEST)
+                diesel::result::Error::DatabaseError(_, _) => e
+                    .into_handler_error()
+                    .with_status(StatusCode::INTERNAL_SERVER_ERROR),
+                _ => e.into_handler_error().with_status(StatusCode::BAD_REQUEST),
             })
         })
         .then(|result| match result {
@@ -76,7 +76,7 @@ pub fn rsvp(mut state: State) -> Box<HandlerFuture> {
                     .expect("Failed to serialize confirmation");
                 let res = create_response(&state, StatusCode::OK, mime::APPLICATION_JSON, body);
                 future::ok((state, res))
-            },
+            }
             Err(e) => future::err((state, e)),
         });
 
