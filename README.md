@@ -2,43 +2,19 @@
 
 Julie & Vic Wedding Backend
 
-## Requirements
+## Description
 
-- Rust >= 1.40.0
-- Docker (For development)
+This project is built in separate pieces:
 
-## Development
+-   **Core:** Contains mainly DB reusable code.
+-   **Api:** Web API Specific code.
 
-Duplicate the `.env.example` and rename it as `.env`
+## Architecture
 
-Start Postgresql
+![Data flow](./architecture.svg)
 
-```sh
-docker run -it --rm --name julie-vic -p 5432:5432 postgres
-```
+Data flow
 
-Run migrations
+![DB Entities](./db_entities.svg)
 
-```sh
-# When bootstraping the project (so schema file doesn't get overwritten)
-diesel migration run --locked-schema
-
-# Whenever a new migration gets added.
-diesel migration run
-
-```
-
-Run in development mode.
-
-```sh
-cargo run
-
-# Or with cargo-watch for updating after changes
-cargo watch -x "run"
-```
-
-For watching changes install `cargo-watch`
-
-```sh
-cargo install cargo-watch
-```
+DB Entities
