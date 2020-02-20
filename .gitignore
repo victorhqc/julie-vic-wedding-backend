@@ -20,3 +20,5 @@ Cargo.lock
 
 # Environment variables
 .env
+
+.DS_Store

@@ -1,3 +1,5 @@
+extern crate openssl;
+
 #[macro_use]
 extern crate serde_derive;
 
@@ -32,6 +34,7 @@ use handlers::index_handler;
 use middlewares::rsvp::RsvpDateMiddleware;
 
 fn main() {
+    openssl_probe::init_ssl_cert_env_vars();
     dotenv().ok();
     env_logger::init();
 
