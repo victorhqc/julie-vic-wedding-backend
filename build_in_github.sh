@@ -17,10 +17,11 @@
 set -euo pipefail
 
 rust-musl-builder() {
-    docker run --rm -v "$(pwd)":/home/rust/src -v cargo-registry:/home/rust/.cargo/registry ekidd/rust-musl-builder "$@"
+    docker run --rm -i -v "$(pwd)":/home/rust/src -v cargo-registry:/home/rust/.cargo/registry ekidd/rust-musl-builder "$@"
 }
 
 echo "Building static binaries using ekidd/rust-musl-builder"
+rust-musl-builder sudo chown -R rust:rust /home/rust
 rust-musl-builder sudo chown -R rust:rust /home/rust/.cargo/registry
 rust-musl-builder cargo build --release
 zip -j "$1"-"$2".zip target/x86_64-unknown-linux-musl/release/"$1"
