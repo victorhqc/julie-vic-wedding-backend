@@ -15,6 +15,7 @@ jobs:
                 rust: [stable]
         steps:
             - uses: actions/checkout@master
+            - uses: montudor/action-zip@v0.1.0
             - name: Login to docker hub
               uses: actions-hub/docker/login@master
               env:

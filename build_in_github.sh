@@ -24,5 +24,5 @@ echo "Building static binaries using ekidd/rust-musl-builder"
 rust-musl-builder sudo chown -R rust:rust /home/rust
 rust-musl-builder sudo chown -R rust:rust /home/rust/.cargo/registry
 rust-musl-builder cargo build --release
-zip -j "$1"-"$2".zip target/x86_64-unknown-linux-musl/release/"$1"
+zip -j "$1".zip target/x86_64-unknown-linux-musl/release/"$1"
 
