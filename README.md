@@ -26,9 +26,7 @@ To build a release target from Windows or Mac OS, is required to have Docker to 
 A solution for it is use [rust-musl-builder](https://github.com/emk/rust-musl-builder) to build it.
 
 ```sh
-alias rust-musl-builder='docker run --rm -it -v "$(pwd)":/home/rust/src -v cargo-registry:/home/rust/.cargo/registry ekidd/rust-musl-builder'
-
-rust-musl-builder sudo chown -R rust:rust /home/rust/.cargo/registry && cargo build --release
+make version=0.1.0 build
 ```
 
 ## Setup Service
