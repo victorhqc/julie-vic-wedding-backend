@@ -1,0 +1,18 @@
+name: Linux Build
+
+on:
+    push:
+        branches:
+            - master
+
+jobs:
+    linux_build:
+        name: Linux Build
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@master
+            - uses: juankaram/rust-musl-action@master
+              env:
+                  BUILD_TARGET: x86_64-unknown-linux-musl
+              with:
+                  args: cargo build --target $BUILD_TARGET --release
