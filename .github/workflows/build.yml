@@ -17,7 +17,7 @@ jobs:
             - uses: actions/checkout@master
             - uses: davidgraeff/rust-musl-action@master
             - name: Install dependencies
-              run: sudo apt install musl musl-dev musl-tools
+              run: sudo apt install musl musl-dev musl-tools libssl-dev
             - name: Install stable Rust
               uses: actions-rs/toolchain@v1
               with:
