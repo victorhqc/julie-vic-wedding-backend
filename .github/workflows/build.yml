@@ -16,4 +16,5 @@ jobs:
         steps:
             - uses: actions/checkout@master
             - uses: davidgraeff/rust-musl-action@master
+            - name: Build binary
               run: cargo build --target x86_64-unknown-linux-musl --release
