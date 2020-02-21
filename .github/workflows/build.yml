@@ -1,0 +1,32 @@
+name: Linux Build
+
+on:
+    push:
+        branches:
+            - master
+
+jobs:
+    linux_build:
+        name: Linux Build
+        runs-on: ${{ matrix.os }}
+        strategy:
+            matrix:
+                os: [ubuntu-latest]
+                rust: [stable]
+        steps:
+            - uses: actions/checkout@master
+            - uses: actions-hub/docker@master
+            - name: Build Static binary
+              run: make version=0.1.0 build
+            # - uses: davidgraeff/rust-musl-action@master
+            # - name: Install dependencies
+            #   run: sudo apt install musl musl-dev musl-tools libssl-dev
+            # - name: Install stable Rust
+            #   uses: actions-rs/toolchain@v1
+            #   with:
+            #       toolchain: stable
+            #       override: true
+            # - name: Install target
+            #   run: rustup target add x86_64-unknown-linux-musl
+            # - name: Build binary
+            #   run: RUST_BACKTRACE=1 PKG_CONFIG_ALLOW_CROSS=1 cargo build --target x86_64-unknown-linux-musl --release
