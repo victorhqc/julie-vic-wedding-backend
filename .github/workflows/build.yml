@@ -22,7 +22,7 @@ jobs:
                   DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
             - uses: actions-hub/docker@master
             - name: Build Static binary
-              run: make version=0.1.0 build
+              run: make version=0.1.0 build_in_github
             # - uses: davidgraeff/rust-musl-action@master
             # - name: Install dependencies
             #   run: sudo apt install musl musl-dev musl-tools libssl-dev
