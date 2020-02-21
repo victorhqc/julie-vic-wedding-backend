@@ -11,7 +11,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@master
-            - uses: juankaram/rust-musl-action@master
+            - uses: davidgraeff/rust-musl-action@master
               env:
                   BUILD_TARGET: x86_64-unknown-linux-musl
               with:
