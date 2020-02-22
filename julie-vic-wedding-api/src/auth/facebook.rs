@@ -74,11 +74,11 @@ pub fn get_user_profile(token: &BasicToken) -> Result<FacebookProfile> {
     let headers = HeaderMap::new();
     let fields = "id,first_name,last_name,middle_name,gender,picture,email";
 
-    let url = String::from(format!(
+    let url = format!(
         "https://graph.facebook.com/me?fields={}&access_token={}",
         fields,
         token.access_token().secret()
-    ));
+    );
 
     println!("{}", url);
     let client = reqwest::Client::new();

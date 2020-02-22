@@ -13,7 +13,7 @@ use url::Url;
 use super::Profile;
 use crate::utils::get_url;
 
-const GOOGLE_PEOPLE_ENDPOINT: &'static str = "https://www.googleapis.com";
+const GOOGLE_PEOPLE_ENDPOINT: &str = "https://www.googleapis.com";
 
 pub fn build_client() -> BasicClient {
     let google_client_id = ClientId::new(
