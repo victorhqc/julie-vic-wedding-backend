@@ -3,8 +3,8 @@ name: Pull Request
 on: pull_request
 
 jobs:
-    linux_build:
-        name: Linux Build
+    code_check:
+        name: Code Check
         runs-on: ${{ matrix.os }}
         strategy:
             matrix:
