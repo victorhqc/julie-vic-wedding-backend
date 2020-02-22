@@ -1,5 +1,5 @@
 build:
-	./build.sh julie-vic-wedding-api $(version) ubuntu
+	./scripts/build.sh julie-vic-wedding-api $(version)
 
 build_in_github:
-	./build_in_github.sh
+	./scripts/build_in_github.sh
