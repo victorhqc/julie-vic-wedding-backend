@@ -1,13 +1,15 @@
-name: Linux Build
+name: Linux Build Release
 
-on:
-    push:
-        branches:
-            - master
+on: release
+
+# on:
+#     push:
+#         branches:
+#             - master
 
 jobs:
-    linux_build:
-        name: Linux Build
+    linux_build_release:
+        name: Linux Build Release
         runs-on: ${{ matrix.os }}
         strategy:
             matrix:
@@ -24,18 +26,13 @@ jobs:
             - uses: actions-hub/docker@master
             - name: Build Static binary
               run: make version=0.1.0 build_in_github
-            - uses: montudor/action-zip@v0.1.0
+            - name: Compress binary
+              uses: montudor/action-zip@v0.1.0
               with:
                   args: zip -j julie-vic-wedding-api.zip ./target/x86_64-unknown-linux-musl/release/julie-vic-wedding-api
-            # - uses: davidgraeff/rust-musl-action@master
-            # - name: Install dependencies
-            #   run: sudo apt install musl musl-dev musl-tools libssl-dev
-            # - name: Install stable Rust
-            #   uses: actions-rs/toolchain@v1
-            #   with:
-            #       toolchain: stable
-            #       override: true
-            # - name: Install target
-            #   run: rustup target add x86_64-unknown-linux-musl
-            # - name: Build binary
-            #   run: RUST_BACKTRACE=1 PKG_CONFIG_ALLOW_CROSS=1 cargo build --target x86_64-unknown-linux-musl --release
+            - name: Update to release
+              uses: JasonEtco/upload-to-release@master
+              with:
+                  args: julie-vic-wedding-api.zip application/zip
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
