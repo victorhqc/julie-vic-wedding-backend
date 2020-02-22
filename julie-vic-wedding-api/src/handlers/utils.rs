@@ -1,6 +1,6 @@
 use futures::{Future, Stream};
-use gotham::helpers::http::response::create_empty_response;
 use gotham::handler::{HandlerError, IntoHandlerError};
+use gotham::helpers::http::response::create_empty_response;
 use gotham::state::{FromState, State};
 use hyper::{Body, Response, StatusCode};
 use std::str::from_utf8;
