@@ -84,7 +84,7 @@ pub struct GoogleRedirectExtractor {
     code: String,
     scope: Vec<String>,
     prompt: String,
-    session_state: String,
+    authuser: i32,
 }
 
 type BasicToken = StandardTokenResponse<EmptyExtraTokenFields, BasicTokenType>;

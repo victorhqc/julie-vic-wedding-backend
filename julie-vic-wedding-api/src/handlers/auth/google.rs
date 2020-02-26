@@ -35,7 +35,6 @@ pub fn google_redirect_handler(mut state: State) -> Box<HandlerFuture> {
     let google_client = build_client();
     let token = exchange_token(&query_param, &google_client);
     let profile = get_user_profile(&token).expect("Couldn't get user's profile");
-
     let repo = Repo::borrow_from(&state).clone();
     let results = find_or_create(repo, profile).then(|result| match result {
         Ok(user) => {
@@ -43,7 +42,7 @@ pub fn google_redirect_handler(mut state: State) -> Box<HandlerFuture> {
             let redirect_url = env::var("REDIRECT_CLIENT_URL");
 
             let res = match redirect_url {
-                Ok(u) => create_temporary_redirect(&state, format!("{}/token?token={}", u, token)),
+                Ok(u) => create_temporary_redirect(&state, format!("{}?token={}", u, token)),
                 _ => {
                     let response = AuthenticatedUser { user, token };
                     let body = serde_json::to_string(&response).expect("Failed to serialize user.");
