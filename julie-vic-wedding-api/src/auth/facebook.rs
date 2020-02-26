@@ -1,19 +1,20 @@
-use anyhow::Result;
 use http::HeaderMap;
 use julie_vic_wedding_core::models::NewUser;
 use oauth2::prelude::*;
 use oauth2::{
     basic::BasicClient, AuthUrl, AuthorizationCode, ClientId, ClientSecret, CsrfToken, RedirectUrl,
-    RequestTokenError, Scope, TokenResponse, TokenUrl,
+    Scope, TokenResponse, TokenUrl,
 };
 use std::env;
+use std::result::Result;
 use std::str;
 use url::Url;
 
+use super::error::AuthError;
 use super::{BasicToken, Profile};
 use crate::utils::get_url;
 
-pub fn build_client() -> BasicClient {
+pub fn build_client() -> Result<BasicClient, AuthError> {
     let facebook_client_id = ClientId::new(
         env::var("FACEBOOK_CLIENT_ID").expect("Missing FACEBOOK_CLIENT_ID environment variable."),
     );
@@ -33,44 +34,35 @@ pub fn build_client() -> BasicClient {
             .expect("Invalid token endpoint URL"),
     );
 
-    BasicClient::new(
+    let client = BasicClient::new(
         facebook_client_id,
         Some(facebook_client_secret),
         auth_url,
         Some(token_url),
     )
     .add_scope(Scope::new("email".to_string()))
-    .set_redirect_url(RedirectUrl::new(
-        Url::parse(format!("{}/facebook/redirect", get_url()).as_ref())
-            .expect("Invalid redirect URL"),
-    ))
+    .set_redirect_url(RedirectUrl::new(Url::parse(
+        format!("{}/facebook/redirect", get_url()).as_ref(),
+    )?));
+
+    Ok(client)
 }
 
 pub fn gen_authorize_url(client: BasicClient) -> (url::Url, CsrfToken) {
     client.authorize_url(CsrfToken::new_random)
 }
 
-pub fn exchange_token(extractor: &FacebookRedirectExtractor, client: &BasicClient) -> BasicToken {
+pub fn exchange_token(
+    extractor: &FacebookRedirectExtractor,
+    client: &BasicClient,
+) -> Result<BasicToken, AuthError> {
     let code = AuthorizationCode::new(extractor.code.to_owned());
-    let token = client.exchange_code(code);
+    let token = client.exchange_code(code)?;
 
-    match token {
-        Ok(token) => token,
-        Err(e) => match e {
-            RequestTokenError::Parse(e, v) => {
-                println!("E: {:?}", e);
-                println!("V: {}", str::from_utf8(&v).unwrap());
-                panic!("Can't parse exchange token!");
-            }
-            _ => {
-                println!("{:?}", e);
-                panic!("Can't exchange token!");
-            }
-        },
-    }
+    Ok(token)
 }
 
-pub fn get_user_profile(token: &BasicToken) -> Result<FacebookProfile> {
+pub fn get_user_profile(token: &BasicToken) -> Result<FacebookProfile, AuthError> {
     let headers = HeaderMap::new();
     let fields = "id,first_name,last_name,middle_name,gender,picture,email";
 
@@ -80,7 +72,6 @@ pub fn get_user_profile(token: &BasicToken) -> Result<FacebookProfile> {
         token.access_token().secret()
     );
 
-    println!("{}", url);
     let client = reqwest::Client::new();
     let mut response = client.get(&url).headers(headers).send()?;
 
