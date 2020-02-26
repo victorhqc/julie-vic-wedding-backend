@@ -6,6 +6,7 @@ use gotham::helpers::http::response::{
 use gotham::state::{FromState, State};
 use hyper::{Body, Response, StatusCode};
 use julie_vic_wedding_core::models::User;
+use std::env;
 
 use crate::auth::encode_token;
 use crate::auth::google::{
@@ -39,10 +40,17 @@ pub fn google_redirect_handler(mut state: State) -> Box<HandlerFuture> {
     let results = find_or_create(repo, profile).then(|result| match result {
         Ok(user) => {
             let token = encode_token(&user, 3600);
-            let response = AuthenticatedUser { user, token };
+            let redirect_url = env::var("REDIRECT_CLIENT_URL");
 
-            let body = serde_json::to_string(&response).expect("Failed to serialize user.");
-            let res = create_response(&state, StatusCode::OK, mime::APPLICATION_JSON, body);
+            let res = match redirect_url {
+                Ok(u) => create_temporary_redirect(&state, format!("{}/token?token={}", u, token)),
+                _ => {
+                    let response = AuthenticatedUser { user, token };
+                    let body = serde_json::to_string(&response).expect("Failed to serialize user.");
+                    create_response(&state, StatusCode::OK, mime::APPLICATION_JSON, body)
+                }
+            };
+
             future::ok((state, res))
         }
         Err(_e) => {
