@@ -31,6 +31,7 @@ use handlers::auth::{
     google_redirect_handler,
 };
 use handlers::index_handler;
+use middlewares::cors::CorsMiddleware;
 use middlewares::rsvp::RsvpDateMiddleware;
 
 fn main() {
@@ -50,6 +51,7 @@ fn router() -> Router {
     let (pipelines, default) = pipelines.add(
         new_pipeline()
             .add(DieselMiddleware::new(repo))
+            .add(CorsMiddleware::default())
             .add(RequestLogger::new(log::Level::Info))
             .build(),
     );
