@@ -1,4 +1,3 @@
-use anyhow::Result;
 use http::{header::AUTHORIZATION, HeaderMap, HeaderValue};
 use julie_vic_wedding_core::models::NewUser;
 use oauth2::prelude::*;
@@ -8,14 +7,16 @@ use oauth2::{
     RedirectUrl, Scope, StandardTokenResponse, TokenResponse, TokenUrl,
 };
 use std::env;
+use std::result::Result;
 use url::Url;
 
+use super::error::AuthError;
 use super::Profile;
 use crate::utils::get_url;
 
 const GOOGLE_PEOPLE_ENDPOINT: &str = "https://www.googleapis.com";
 
-pub fn build_client() -> BasicClient {
+pub fn build_client() -> Result<BasicClient, AuthError> {
     let google_client_id = ClientId::new(
         env::var("GOOGLE_CLIENT_ID").expect("Missing GOOGLE_CLIENT_ID environment variable."),
     );
@@ -35,7 +36,7 @@ pub fn build_client() -> BasicClient {
             .expect("Invalid token endpoint URL"),
     );
 
-    BasicClient::new(
+    let client = BasicClient::new(
         google_client_id,
         Some(google_client_secret),
         auth_url,
@@ -47,22 +48,28 @@ pub fn build_client() -> BasicClient {
     .add_scope(Scope::new(
         "https://www.googleapis.com/auth/userinfo.profile".to_string(),
     ))
-    .set_redirect_url(RedirectUrl::new(
-        Url::parse(format!("{}/google/redirect", get_url()).as_ref())
-            .expect("Invalid redirect URL"),
-    ))
+    .set_redirect_url(RedirectUrl::new(Url::parse(
+        format!("{}/google/redirect", get_url()).as_ref(),
+    )?));
+
+    Ok(client)
 }
 
 pub fn gen_authorize_url(client: BasicClient) -> (url::Url, CsrfToken) {
     client.authorize_url(CsrfToken::new_random)
 }
 
-pub fn exchange_token(extractor: &GoogleRedirectExtractor, client: &BasicClient) -> BasicToken {
+pub fn exchange_token(
+    extractor: &GoogleRedirectExtractor,
+    client: &BasicClient,
+) -> Result<BasicToken, AuthError> {
     let code = AuthorizationCode::new(extractor.code.to_owned());
-    client.exchange_code(code).expect("Couldn't exchange token")
+    let token = client.exchange_code(code)?;
+
+    Ok(token)
 }
 
-pub fn get_user_profile(token: &BasicToken) -> Result<GoogleProfile> {
+pub fn get_user_profile(token: &BasicToken) -> Result<GoogleProfile, AuthError> {
     let token_header = format!("Bearer {}", token.access_token().secret());
 
     let mut headers = HeaderMap::new();

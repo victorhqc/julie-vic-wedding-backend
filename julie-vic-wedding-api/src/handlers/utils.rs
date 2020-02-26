@@ -1,9 +1,11 @@
-use futures::{Future, Stream};
-use gotham::handler::{HandlerError, IntoHandlerError};
+use futures::{future, Future, Stream};
+use gotham::handler::{HandlerError, HandlerFuture, IntoHandlerError};
 use gotham::helpers::http::response::create_empty_response;
 use gotham::state::{FromState, State};
 use hyper::{Body, Response, StatusCode};
 use std::str::from_utf8;
+
+use crate::auth::error::WithCode;
 
 pub fn extract_json<T>(state: &mut State) -> impl Future<Item = T, Error = HandlerError>
 where
@@ -31,4 +33,23 @@ pub fn index_handler(state: State) -> (State, Response<Body>) {
     let res = create_empty_response(&state, StatusCode::OK);
 
     (state, res)
+}
+
+pub fn error_handler<T>(state: State, e: T) -> Box<HandlerFuture>
+where
+    T: IntoHandlerError + WithCode,
+{
+    let code = e.code();
+    let err = wrap_error(state, e, code);
+    let f = future::err(err);
+    Box::new(f)
+}
+
+pub fn wrap_error<T>(state: State, e: T, code: StatusCode) -> (State, HandlerError)
+where
+    T: IntoHandlerError,
+{
+    let err = e.into_handler_error().with_status(code);
+
+    (state, err)
 }

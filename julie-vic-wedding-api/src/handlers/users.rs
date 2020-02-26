@@ -7,7 +7,7 @@ use hyper::StatusCode;
 
 use crate::auth::AuthUser;
 use crate::conduit::users;
-use crate::handlers::extract_json;
+use crate::handlers::{extract_json, wrap_error};
 use crate::Repo;
 use julie_vic_wedding_core::attend_status_type::AttendStatus;
 use julie_vic_wedding_core::models::{ConfirmedUser, NewConfirmedUser, User};
@@ -67,17 +67,31 @@ pub fn rsvp(mut state: State) -> Box<HandlerFuture> {
                 diesel::result::Error::DatabaseError(_, _) => e
                     .into_handler_error()
                     .with_status(StatusCode::INTERNAL_SERVER_ERROR),
+                diesel::result::Error::NotFound => {
+                    e.into_handler_error().with_status(StatusCode::UNAUTHORIZED)
+                }
                 _ => e.into_handler_error().with_status(StatusCode::BAD_REQUEST),
             })
         })
-        .then(|result| match result {
-            Ok(confirmed_user) => {
-                let body = serde_json::to_string(&RsvpResponse { confirmed_user })
-                    .expect("Failed to serialize confirmation");
-                let res = create_response(&state, StatusCode::OK, mime::APPLICATION_JSON, body);
-                future::ok((state, res))
-            }
-            Err(e) => future::err((state, e)),
+        .then(|result| {
+            let confirmed_user = match result {
+                Ok(u) => u,
+                Err(e) => {
+                    let f = wrap_error(state, e, StatusCode::INTERNAL_SERVER_ERROR);
+                    return future::err(f);
+                }
+            };
+
+            let body = match serde_json::to_string(&RsvpResponse { confirmed_user }) {
+                Ok(b) => b,
+                Err(e) => {
+                    let f = wrap_error(state, e, StatusCode::INTERNAL_SERVER_ERROR);
+                    return future::err(f);
+                }
+            };
+
+            let res = create_response(&state, StatusCode::OK, mime::APPLICATION_JSON, body);
+            future::ok((state, res))
         });
 
     Box::new(f)
