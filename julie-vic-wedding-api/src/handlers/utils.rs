@@ -40,8 +40,16 @@ where
     T: IntoHandlerError + WithCode,
 {
     let code = e.code();
-    let err = e.into_handler_error().with_status(code);
-    let f = future::err((state, err));
-
+    let err = wrap_error(state, e, code);
+    let f = future::err(err);
     Box::new(f)
+}
+
+pub fn wrap_error<T>(state: State, e: T, code: StatusCode) -> (State, HandlerError)
+where
+    T: IntoHandlerError,
+{
+    let err = e.into_handler_error().with_status(code);
+
+    (state, err)
 }

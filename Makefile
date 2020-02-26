@@ -3,3 +3,6 @@ build:
 
 build_in_github:
 	./scripts/build_in_github.sh
+
+postgres:
+	docker run -it --rm --name julie-vic -p 5432:5432 postgres
