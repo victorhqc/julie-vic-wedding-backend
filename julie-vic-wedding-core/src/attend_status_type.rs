@@ -19,6 +19,18 @@ pub enum AttendStatus {
     YesPlusOne,
 }
 
+impl AttendStatus {
+    pub fn parse(&self) -> (bool, bool) {
+        let (will_attend, plus_one) = match self {
+            AttendStatus::No => (false, false),
+            AttendStatus::Yes => (true, false),
+            AttendStatus::YesPlusOne => (true, true),
+        };
+
+        (will_attend, plus_one)
+    }
+}
+
 impl ToSql<AttendStatusType, Pg> for AttendStatus {
     fn to_sql<W: Write>(&self, out: &mut Output<W, Pg>) -> serialize::Result {
         match *self {

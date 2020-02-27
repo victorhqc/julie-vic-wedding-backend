@@ -2,6 +2,7 @@ use super::schema::{confirmed_users, tables, users};
 use crate::attend_status_type::AttendStatus;
 use chrono::naive::serde::ts_seconds;
 use chrono::NaiveDateTime;
+use serde::ser::{Serialize as SerdeSerialize, SerializeStruct, Serializer};
 use serde_derive::Serialize;
 use uuid::Uuid;
 
@@ -54,7 +55,7 @@ pub struct NewTable<'a> {
     pub alias: Option<&'a str>,
 }
 
-#[derive(Debug, Serialize, Queryable, Associations, PartialEq)]
+#[derive(Debug, Queryable, Associations, PartialEq)]
 #[table_name = "confirmed_users"]
 #[belongs_to(User)]
 #[belongs_to(Table)]
@@ -62,10 +63,26 @@ pub struct ConfirmedUser {
     pub user_id: Uuid,
     pub will_attend: AttendStatus,
     pub table_id: Option<Uuid>,
-    #[serde(with = "ts_seconds")]
     pub created_at: NaiveDateTime,
-    #[serde(with = "ts_seconds")]
     pub updated_at: NaiveDateTime,
+}
+
+impl SerdeSerialize for ConfirmedUser {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let (will_attend, plus_one) = self.will_attend.parse();
+
+        let mut state = serializer.serialize_struct("ConfirmedUser", 6)?;
+        state.serialize_field("user_id", &self.user_id)?;
+        state.serialize_field("table_id", &self.table_id)?;
+        state.serialize_field("will_attend", &will_attend)?;
+        state.serialize_field("plus_one", &plus_one)?;
+        state.serialize_field("created_at", &self.created_at.timestamp())?;
+        state.serialize_field("updated_at", &self.updated_at.timestamp())?;
+        state.end()
+    }
 }
 
 #[derive(Insertable)]
