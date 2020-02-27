@@ -63,10 +63,12 @@ impl Middleware for CorsMiddleware {
                 origin = settings.origin.unwrap();
             };
 
-            let mut methods = String::from("");
-            for method in settings.methods.iter() {
-                methods.push_str(method.as_str());
-            }
+            let methods = settings
+                .methods
+                .iter()
+                .map(|m| String::from(m.as_str()))
+                .collect::<Vec<String>>()
+                .join(", ");
 
             response.headers_mut().insert(
                 ACCESS_CONTROL_ALLOW_CREDENTIALS,
