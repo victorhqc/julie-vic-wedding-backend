@@ -77,8 +77,7 @@ pub fn rsvp(mut state: State) -> Box<HandlerFuture> {
             let confirmed_user = match result {
                 Ok(u) => u,
                 Err(e) => {
-                    let f = wrap_error(state, e, StatusCode::INTERNAL_SERVER_ERROR);
-                    return future::err(f);
+                    return future::err((state, e));
                 }
             };
 
