@@ -29,12 +29,6 @@ where
     e.into_handler_error().with_status(StatusCode::BAD_REQUEST)
 }
 
-pub fn index_handler(state: State) -> (State, Response<Body>) {
-    let res = create_empty_response(&state, StatusCode::OK);
-
-    (state, res)
-}
-
 pub fn error_handler<T>(state: State, e: T) -> Box<HandlerFuture>
 where
     T: IntoHandlerError + WithCode,
@@ -52,4 +46,10 @@ where
     let err = e.into_handler_error().with_status(code);
 
     (state, err)
+}
+
+pub fn empty_handler(state: State) -> (State, Response<Body>) {
+    let res = create_empty_response(&state, StatusCode::NO_CONTENT);
+
+    (state, res)
 }

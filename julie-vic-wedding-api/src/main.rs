@@ -14,6 +14,7 @@ use gotham::router::builder::*;
 use gotham::router::Router;
 use gotham_middleware_diesel::{self, DieselMiddleware};
 use gotham_middleware_jwt::JWTMiddleware;
+use hyper::Method;
 
 mod auth;
 mod conduit;
@@ -30,7 +31,7 @@ use handlers::auth::{
     facebook_authorize_handler, facebook_redirect_handler, google_authorize_handler,
     google_redirect_handler,
 };
-use handlers::index_handler;
+use handlers::empty_handler;
 use middlewares::cors::CorsMiddleware;
 use middlewares::rsvp::RsvpDateMiddleware;
 
@@ -51,8 +52,8 @@ fn router() -> Router {
     let (pipelines, default) = pipelines.add(
         new_pipeline()
             .add(DieselMiddleware::new(repo))
-            .add(CorsMiddleware::default())
             .add(RequestLogger::new(log::Level::Info))
+            .add(CorsMiddleware::default())
             .build(),
     );
     let (pipelines, authenticated) = pipelines.add(
@@ -61,14 +62,21 @@ fn router() -> Router {
             .build(),
     );
     let (pipelines, rsvp_check) = pipelines.add(new_pipeline().add(RsvpDateMiddleware).build());
+    let (pipelines, cors) = pipelines.add(
+        new_pipeline()
+            .add(CorsMiddleware::default())
+            .add(RequestLogger::new(log::Level::Info))
+            .build(),
+    );
 
     let pipeline_set = finalize_pipeline_set(pipelines);
     let default_chain = (default, ());
+    let cors_preflight_chain = (cors, ());
     let auth_chain = (authenticated, default_chain);
     let rsvp_chain = (rsvp_check, auth_chain);
 
     build_router(default_chain, pipeline_set, |route| {
-        route.get_or_head("/").to(index_handler);
+        route.get_or_head("/").to(empty_handler);
 
         route.get("/google/authorize").to(google_authorize_handler);
         route
@@ -85,6 +93,16 @@ fn router() -> Router {
             .to(facebook_redirect_handler);
 
         route.scope("/api", |route| {
+            route.with_pipeline_chain(cors_preflight_chain, |route| {
+                route
+                    .request(vec![Method::OPTIONS, Method::HEAD], "/me")
+                    .to(empty_handler);
+
+                route
+                    .request(vec![Method::OPTIONS, Method::HEAD], "/rsvp")
+                    .to(empty_handler);
+            });
+
             route.with_pipeline_chain(auth_chain, |route| {
                 route.get("/me").to(handlers::users::me);
             });

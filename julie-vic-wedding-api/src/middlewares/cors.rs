@@ -4,7 +4,8 @@ use gotham::middleware::Middleware;
 use gotham::state::{FromState, State};
 use hyper::header::{
     HeaderMap, HeaderValue, ACCESS_CONTROL_ALLOW_CREDENTIALS, ACCESS_CONTROL_ALLOW_HEADERS,
-    ACCESS_CONTROL_ALLOW_METHODS, ACCESS_CONTROL_ALLOW_ORIGIN, ACCESS_CONTROL_MAX_AGE, ORIGIN,
+    ACCESS_CONTROL_ALLOW_METHODS, ACCESS_CONTROL_ALLOW_ORIGIN, ACCESS_CONTROL_MAX_AGE,
+    AUTHORIZATION, CONTENT_TYPE, ORIGIN,
 };
 use hyper::Method;
 use std::option::Option;
@@ -70,6 +71,12 @@ impl Middleware for CorsMiddleware {
                 .collect::<Vec<String>>()
                 .join(", ");
 
+            let headers = vec![AUTHORIZATION, CONTENT_TYPE]
+                .iter()
+                .map(|m| String::from(m.as_str()))
+                .collect::<Vec<String>>()
+                .join(", ");
+
             response.headers_mut().insert(
                 ACCESS_CONTROL_ALLOW_CREDENTIALS,
                 HeaderValue::from_str("true").unwrap(),
@@ -77,7 +84,7 @@ impl Middleware for CorsMiddleware {
 
             response.headers_mut().insert(
                 ACCESS_CONTROL_ALLOW_HEADERS,
-                HeaderValue::from_str("Authorization, Content-Type").unwrap(),
+                HeaderValue::from_str(&headers).unwrap(),
             );
 
             response.headers_mut().insert(
