@@ -8,6 +8,7 @@ table! {
         table_id -> Nullable<Uuid>,
         created_at -> Timestamp,
         updated_at -> Timestamp,
+        token_id -> Uuid,
     }
 }
 
@@ -16,6 +17,13 @@ table! {
         id -> Uuid,
         name -> Text,
         alias -> Nullable<Text>,
+    }
+}
+
+table! {
+    tokens (id) {
+        id -> Uuid,
+        token -> Varchar,
     }
 }
 
@@ -31,6 +39,7 @@ table! {
 }
 
 joinable!(confirmed_users -> tables (table_id));
+joinable!(confirmed_users -> tokens (token_id));
 joinable!(confirmed_users -> users (user_id));
 
-allow_tables_to_appear_in_same_query!(confirmed_users, tables, users,);
+allow_tables_to_appear_in_same_query!(confirmed_users, tables, tokens, users,);
