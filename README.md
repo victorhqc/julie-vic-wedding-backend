@@ -19,6 +19,30 @@ Data flow
 
 DB Entities
 
+## Run in development mode
+
+You can also run this project in the root but you'll need several terminals open for that.
+
+1.  Start the DB
+
+    ```sh
+    make postgres
+    ```
+
+1.  Run migrations (You'll need to change location to `julie-vic-wedding-core`)
+
+1.  Run api
+
+    ```sh
+    cargo watch -x 'run --bin=julie-vic-wedding-api'
+    ```
+
+    Or the CLI
+
+    ```sh
+    cargo watch -x 'run --bin=julie-vic-wedding-cli'
+    ```
+
 ## Build production bundle
 
 To build a release target from Windows or Mac OS, is required to have Docker to cross-compile. This because it relies on Open SSL and building it outside Linux hasn't been trivial. Many posts exists about it that describe it better.
