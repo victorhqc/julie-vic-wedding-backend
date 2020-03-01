@@ -24,6 +24,8 @@ table! {
     tokens (id) {
         id -> Uuid,
         token -> Varchar,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
     }
 }
 
