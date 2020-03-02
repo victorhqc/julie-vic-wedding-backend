@@ -6,9 +6,9 @@ table! {
         user_id -> Uuid,
         will_attend -> AttendStatusType,
         table_id -> Nullable<Uuid>,
+        token_id -> Uuid,
         created_at -> Timestamp,
         updated_at -> Timestamp,
-        token_id -> Uuid,
     }
 }
 
