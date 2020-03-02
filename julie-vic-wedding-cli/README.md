@@ -27,3 +27,11 @@ For watching changes install `cargo-watch`
 ```sh
 cargo install cargo-watch
 ```
+
+## Commands
+
+### Generate tokens
+
+```sh
+julie-vic-wedding-cli generate tokens --a 50
+```
