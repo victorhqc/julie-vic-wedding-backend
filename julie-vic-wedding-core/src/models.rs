@@ -1,4 +1,4 @@
-use super::schema::{confirmed_users, tables, users};
+use super::schema::{confirmed_users, tables, tokens, users};
 use crate::attend_status_type::AttendStatus;
 use chrono::naive::serde::ts_seconds;
 use chrono::NaiveDateTime;
@@ -63,6 +63,7 @@ pub struct ConfirmedUser {
     pub user_id: Uuid,
     pub will_attend: AttendStatus,
     pub table_id: Option<Uuid>,
+    pub token_id: Uuid,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
 }
@@ -77,6 +78,7 @@ impl SerdeSerialize for ConfirmedUser {
         let mut state = serializer.serialize_struct("ConfirmedUser", 6)?;
         state.serialize_field("user_id", &self.user_id)?;
         state.serialize_field("table_id", &self.table_id)?;
+        state.serialize_field("token_id", &self.token_id)?;
         state.serialize_field("will_attend", &will_attend)?;
         state.serialize_field("plus_one", &plus_one)?;
         state.serialize_field("created_at", &self.created_at.timestamp())?;
@@ -91,4 +93,23 @@ pub struct NewConfirmedUser {
     pub user_id: Uuid,
     pub will_attend: AttendStatus,
     pub table_id: Option<Uuid>,
+    pub token_id: Uuid,
+}
+
+#[derive(Debug, Serialize, Queryable, Identifiable)]
+#[table_name = "tokens"]
+pub struct Token {
+    pub id: Uuid,
+    pub token: String,
+    #[serde(with = "ts_seconds")]
+    pub created_at: NaiveDateTime,
+    #[serde(with = "ts_seconds")]
+    pub updated_at: NaiveDateTime,
+}
+
+#[derive(Insertable)]
+#[table_name = "tokens"]
+pub struct NewToken {
+    pub id: Uuid,
+    pub token: String,
 }

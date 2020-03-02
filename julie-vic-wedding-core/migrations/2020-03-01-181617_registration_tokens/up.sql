@@ -1,0 +1,12 @@
+CREATE TABLE tokens (
+    id UUID PRIMARY KEY NOT NULL,
+    token VARCHAR(5) UNIQUE NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+SELECT diesel_manage_updated_at('tokens');
+
+ALTER TABLE confirmed_users
+ADD COLUMN token_id UUID NOT NULL,
+ADD CONSTRAINT fk_token_id FOREIGN KEY (token_id) REFERENCES tokens (id) ON DELETE CASCADE;

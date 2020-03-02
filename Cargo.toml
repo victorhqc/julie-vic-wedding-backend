@@ -1,5 +1,6 @@
 [workspace]
 members = [
-    "julie-vic-wedding-core",
-    "julie-vic-wedding-api"
+    "julie-vic-wedding-api",
+    "julie-vic-wedding-cli",
+    "julie-vic-wedding-core"
 ]

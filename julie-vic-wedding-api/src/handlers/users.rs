@@ -10,7 +10,7 @@ use crate::conduit::users;
 use crate::handlers::{extract_json, wrap_error};
 use crate::Repo;
 use julie_vic_wedding_core::attend_status_type::AttendStatus;
-use julie_vic_wedding_core::models::{ConfirmedUser, NewConfirmedUser, User};
+use julie_vic_wedding_core::models::{ConfirmedUser, User};
 
 #[derive(Serialize)]
 pub struct UserResponse {
@@ -43,6 +43,7 @@ pub fn me(state: State) -> Box<HandlerFuture> {
 pub struct RsvpRequest {
     will_attend: bool,
     plus_one: bool,
+    token: String,
 }
 
 #[derive(Serialize)]
@@ -57,13 +58,14 @@ pub fn rsvp(mut state: State) -> Box<HandlerFuture> {
 
     let f = extract_json::<RsvpRequest>(&mut state)
         .and_then(move |body| {
-            let confirmed_user = NewConfirmedUser {
+            let user_data = users::NewUserData {
                 user_id,
                 will_attend: get_attend_status(&body),
                 table_id: None,
+                token: body.token,
             };
 
-            users::rsvp_confirmation(repo, confirmed_user).map_err(|e| match e {
+            users::rsvp_confirmation(repo, user_data).map_err(|e| match e {
                 diesel::result::Error::DatabaseError(_, _) => e
                     .into_handler_error()
                     .with_status(StatusCode::INTERNAL_SERVER_ERROR),
@@ -77,8 +79,7 @@ pub fn rsvp(mut state: State) -> Box<HandlerFuture> {
             let confirmed_user = match result {
                 Ok(u) => u,
                 Err(e) => {
-                    let f = wrap_error(state, e, StatusCode::INTERNAL_SERVER_ERROR);
-                    return future::err(f);
+                    return future::err((state, e));
                 }
             };
 
