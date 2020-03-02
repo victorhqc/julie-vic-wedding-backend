@@ -1,4 +1,3 @@
-use anyhow::Result;
 use diesel::prelude::*;
 use diesel::PgConnection;
 use julie_vic_wedding_core::models::{NewToken, Token};
