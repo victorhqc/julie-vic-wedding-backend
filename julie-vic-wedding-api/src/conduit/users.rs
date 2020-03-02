@@ -67,8 +67,21 @@ pub fn rsvp_confirmation(
             Ok(e) => Ok(e),
             Err(_) => {
                 let token = {
+                    use julie_vic_wedding_core::schema::confirmed_users::dsl::*;
                     use julie_vic_wedding_core::schema::tokens::dsl::*;
-                    tokens.filter(token.eq(data.token)).first::<Token>(&conn)
+                    let existing_token =
+                        tokens.filter(token.eq(data.token)).first::<Token>(&conn)?;
+
+                    let already_used: Vec<(String, Uuid)> = tokens
+                        .inner_join(confirmed_users.on(token_id.eq(existing_token.id)))
+                        .select((token, user_id))
+                        .load(&conn)?;
+
+                    if already_used.len() > 0 {
+                        Err(DieselError::NotFound)
+                    } else {
+                        Ok(existing_token)
+                    }
                 };
 
                 match token {
