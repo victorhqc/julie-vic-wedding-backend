@@ -78,11 +78,11 @@ impl SerdeSerialize for ConfirmedUser {
         let mut state = serializer.serialize_struct("ConfirmedUser", 6)?;
         state.serialize_field("user_id", &self.user_id)?;
         state.serialize_field("table_id", &self.table_id)?;
+        state.serialize_field("token_id", &self.token_id)?;
         state.serialize_field("will_attend", &will_attend)?;
         state.serialize_field("plus_one", &plus_one)?;
         state.serialize_field("created_at", &self.created_at.timestamp())?;
         state.serialize_field("updated_at", &self.updated_at.timestamp())?;
-        state.serialize_field("token_id", &self.token_id)?;
         state.end()
     }
 }
@@ -111,5 +111,5 @@ pub struct Token {
 #[table_name = "tokens"]
 pub struct NewToken {
     pub id: Uuid,
-    token: String,
+    pub token: String,
 }
