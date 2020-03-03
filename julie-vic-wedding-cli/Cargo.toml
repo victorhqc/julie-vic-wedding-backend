@@ -16,13 +16,16 @@ env_logger = "0.6.0"
 futures = "0.1"
 hyper = "0.12"
 julie-vic-wedding-core = { path = "../julie-vic-wedding-core" }
+lettre = "0.9.2"
 log = "0.4"
+native-tls = "0.2.3"
 rand = "0.7.3"
 reqwest = { version = "0.9" }
+thiserror = "1.0.11"
 tokio = "0.1.17"
 serde = "1.0"
 serde_derive = "1.0"
 serde_json = "1.0"
 uuid = { version = "0.6", features = ["serde", "v4"] }
-# openssl-probe = "0.1.2"
-# openssl = "*"
+openssl-probe = "0.1.2"
+openssl = "*"

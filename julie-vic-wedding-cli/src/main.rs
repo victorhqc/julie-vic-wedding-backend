@@ -1,6 +1,7 @@
 use clap::{
     crate_authors, crate_description, crate_name, crate_version, App, AppSettings, Arg, SubCommand,
 };
+use dotenv::dotenv;
 
 mod commands;
 mod db;
@@ -8,6 +9,9 @@ mod db;
 use crate::commands::{emails, tokens};
 
 fn main() {
+    openssl_probe::init_ssl_cert_env_vars();
+    dotenv().ok();
+    env_logger::init();
     let conn = db::establish_connection();
 
     let matches = App::new(crate_name!())
