@@ -5,7 +5,7 @@ use clap::{
 mod commands;
 mod db;
 
-use crate::commands::tokens;
+use crate::commands::{emails, tokens};
 
 fn main() {
     let conn = db::establish_connection();
@@ -31,6 +31,12 @@ fn main() {
                                 .help("Amount of tokens to create"),
                         ),
                 ),
+        )
+        .subcommand(
+            SubCommand::with_name("emails")
+                .about("Email stuff")
+                .setting(AppSettings::SubcommandRequiredElseHelp)
+                .subcommand(SubCommand::with_name("rsvp").about("Send RSVP emails")),
         )
         // .subcommand(
         //     SubCommand::with_name("users")
@@ -63,6 +69,12 @@ fn main() {
                     .parse()
                     .expect("Invalid number");
                 tokens::generate_tokens(amount, conn);
+            }
+            _ => unreachable!(),
+        },
+        ("emails", Some(email_matches)) => match email_matches.subcommand() {
+            ("rsvp", Some(_)) => {
+                emails::send_rsvp_emails(conn);
             }
             _ => unreachable!(),
         },

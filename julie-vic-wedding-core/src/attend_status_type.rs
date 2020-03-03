@@ -4,11 +4,11 @@ use diesel::serialize::{self, IsNull, Output, ToSql};
 use diesel::*;
 use std::io::Write;
 
-#[derive(SqlType)]
+#[derive(SqlType, QueryId)]
 #[postgres(type_name = "attend_status")]
 pub struct AttendStatusType;
 
-#[derive(Debug, PartialEq, FromSqlRow, AsExpression, Serialize)]
+#[derive(Debug, PartialEq, FromSqlRow, AsExpression, Serialize, QueryId)]
 #[sql_type = "AttendStatusType"]
 pub enum AttendStatus {
     #[serde(rename = "no")]
