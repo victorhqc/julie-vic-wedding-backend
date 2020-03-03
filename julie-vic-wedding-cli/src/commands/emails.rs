@@ -1,18 +1,8 @@
 use diesel::prelude::*;
 use diesel::PgConnection;
 use julie_vic_wedding_core::attend_status_type::AttendStatus;
-use lettre::error::Error as LettreError;
-use lettre::smtp::authentication::{Credentials, Mechanism};
-use lettre::smtp::extension::ClientId;
-use lettre::smtp::ConnectionReuseParameters;
-use lettre::{
-    ClientSecurity, ClientTlsParameters, EmailAddress, Envelope, SendableEmail, SmtpClient,
-    Transport,
-};
-use native_tls::{Protocol, TlsConnector};
 use std::convert::From;
 use std::env;
-use thiserror::Error;
 use uuid::Uuid;
 
 pub fn send_rsvp_emails(conn: PgConnection) {
@@ -44,82 +34,49 @@ pub fn send_rsvp_emails(conn: PgConnection) {
         let sender_email = format!("rsvp@{}", domain);
         println!("sender: {}", sender_email);
 
-        let email_from = match EmailAddress::new(sender_email.clone()) {
-            Ok(email) => email,
-            Err(e) => {
-                println!("Failed to send email from {}: {:?}", sender_email, e);
-                continue;
-            }
-        };
-        let email_to = match EmailAddress::new(user_email.clone()) {
-            Ok(email) => email,
-            Err(e) => {
-                println!("Failed to send email to {}: {:?}", user_email, e);
-                continue;
-            }
-        };
+        let email = Email::new(sender_email, user_email, full_name);
 
-        let email = SendableEmail::new(
-            Envelope::new(Some(email_from), vec![email_to]).unwrap(),
-            "Hello".to_string(),
-            "Hello world".to_string().into_bytes(),
-        );
-
-        match send_email(email) {
-            Ok(_) => println!("Email to {} was successfully sent", user_email),
-            Err(e) => println!("Failed to send email to {}: {:?}", user_email, e),
-        }
+        match send_email(&email) {
+            Ok(_) => println!("Email to {} was successfully sent", email.to),
+            Err(e) => println!("Failed to send email to {}: {:?}", email.from, e),
+        };
     }
 }
 
-fn send_email(email: SendableEmail) -> Result<(), EmailErr> {
-    let smtp_url = env::var("SMTP_URL").expect("SMTP_URL is not set");
-    let smtp_port = env::var("SMTP_PORT").expect("SMTP_PORT is not set");
-    let smtp_user = env::var("SMTP_USER").expect("SMTP_USER is not set");
-    let smtp_password = env::var("SMTP_PASSWORD").expect("SMTP_PASSWORD is not set");
+fn send_email(email: &Email) -> Result<(), Box<dyn std::error::Error>> {
     let domain = env::var("DOMAIN").expect("DOMAIN is not set");
+    let mailgun_key = env::var("MAILGUN_KEY").expect("MAILGUN_KEY is not set");
 
-    let mut tls_builder = TlsConnector::builder();
-    tls_builder.min_protocol_version(Some(Protocol::Tlsv10));
-    let tls_parameters =
-        ClientTlsParameters::new(smtp_url.to_string(), tls_builder.build().unwrap());
-    let mut mailer = SmtpClient::new(
-        (
-            smtp_url.as_ref(),
-            smtp_port.parse().expect("SMTP_PORT is not a valid number"),
-        ),
-        ClientSecurity::Required(tls_parameters),
-    )
-    .unwrap()
-    // Set the name sent during EHLO/HELO, default is `localhost`
-    .hello_name(ClientId::Domain(domain))
-    .authentication_mechanism(Mechanism::Login)
-    .credentials(Credentials::new(smtp_user, smtp_password))
-    // Enable SMTPUTF8 if the server supports it
-    .smtp_utf8(true)
-    .connection_reuse(ConnectionReuseParameters::ReuseUnlimited)
-    .transport();
+    let url = format!("https://api.eu.mailgun.net/v3/{}/messages", domain);
 
-    // Send the email
-    let result = mailer.send(email);
+    let form = reqwest::blocking::multipart::Form::new()
+        .text("from", email.from.clone())
+        .text("to", email.to.clone())
+        .text("subject", String::from("Test"))
+        .text("text", String::from("Hello World"));
 
-    if result.is_ok() {
-        Ok(())
-    } else {
-        Err(EmailErr::FailedToSend)
-    }
+    let client = reqwest::blocking::Client::new();
+
+    let res = client
+        .post(&url)
+        .basic_auth("api", Some(mailgun_key))
+        .multipart(form)
+        .send()?;
+
+    println!("{:#?}", res);
+    Ok(())
 }
 
-#[derive(Error, Debug)]
-pub enum EmailErr {
-    #[error("Failed to send email")]
-    FailedToSend,
-    #[error("Lettre failed: {0}")]
-    LettreError(LettreError),
+struct Email {
+    pub from: String,
+    pub to: String,
 }
 
-impl From<LettreError> for EmailErr {
-    fn from(error: LettreError) -> Self {
-        EmailErr::LettreError(error)
+impl Email {
+    pub fn new(from_email: String, to_email: String, to_name: String) -> Self {
+        Email {
+            from: from_email,
+            to: format!("{} <{}>", to_name, to_email),
+        }
     }
 }
