@@ -8,6 +8,7 @@ edition = "2018"
 
 [dependencies]
 anyhow = "1.0"
+askama = "0.9.0"
 chrono = { version = "0.4", features = ["serde"]}
 clap = "2.33.0"
 diesel = { version = "1.4", features = ["postgres", "chrono", "extras"] }
