@@ -30,11 +30,15 @@ table! {
 }
 
 table! {
+    use use diesel::sql_types::*;
+    use crate::available_language_type::AvailableLanguageType;
+
     users (id) {
         id -> Uuid,
         name -> Text,
         last_name -> Nullable<Text>,
         email -> Text,
+        language -> AvailableLanguageType,
         created_at -> Timestamp,
         updated_at -> Timestamp,
     }

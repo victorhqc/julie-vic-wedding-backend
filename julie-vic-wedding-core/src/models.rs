@@ -1,18 +1,20 @@
 use super::schema::{confirmed_users, tables, tokens, users};
 use crate::attend_status_type::AttendStatus;
+use crate::available_language_type::AvailableLanguage;
 use chrono::naive::serde::ts_seconds;
 use chrono::NaiveDateTime;
 use serde::ser::{Serialize as SerdeSerialize, SerializeStruct, Serializer};
 use serde_derive::Serialize;
 use uuid::Uuid;
 
-#[derive(Debug, Serialize, Queryable, Identifiable)]
+#[derive(Debug, Serialize, Queryable, Identifiable, Deserialize)]
 #[table_name = "users"]
 pub struct User {
     pub id: Uuid,
     pub name: String,
     pub last_name: Option<String>,
     pub email: String,
+    pub language: AvailableLanguage,
     #[serde(with = "ts_seconds")]
     pub created_at: NaiveDateTime,
     #[serde(with = "ts_seconds")]
