@@ -1,6 +1,6 @@
 [package]
 name = "julie-vic-wedding-cli"
-version = "0.5.0"
+version = "0.5.1"
 authors = ["Victor Quiroz Castro <victorhqc@gmail.com>"]
 edition = "2018"
 
@@ -24,5 +24,5 @@ serde = "1.0"
 serde_derive = "1.0"
 serde_json = "1.0"
 uuid = { version = "0.6", features = ["serde", "v4"] }
-# openssl-probe = "0.1.2"
-# openssl = "*"
+openssl-probe = "0.1.2"
+openssl = "*"
