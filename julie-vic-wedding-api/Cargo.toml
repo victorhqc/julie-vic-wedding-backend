@@ -1,6 +1,6 @@
 [package]
 name = "julie-vic-wedding-api"
-version = "0.4.0"
+version = "0.5.0"
 authors = ["Victor Quiroz Castro <victorhqc@gmail.com>"]
 edition = "2018"
 
