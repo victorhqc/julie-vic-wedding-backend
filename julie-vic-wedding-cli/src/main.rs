@@ -1,3 +1,5 @@
+extern crate openssl;
+
 use clap::{
     crate_authors, crate_description, crate_name, crate_version, App, AppSettings, Arg, SubCommand,
 };
@@ -8,6 +10,7 @@ mod db;
 use crate::commands::tokens;
 
 fn main() {
+    openssl_probe::init_ssl_cert_env_vars();
     let conn = db::establish_connection();
 
     let matches = App::new(crate_name!())
