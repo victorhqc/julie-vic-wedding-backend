@@ -101,6 +101,16 @@ fn router() -> Router {
                 route
                     .request(vec![Method::OPTIONS, Method::HEAD], "/rsvp")
                     .to(empty_handler);
+
+                route
+                    .request(vec![Method::OPTIONS, Method::HEAD], "/token/verify")
+                    .to(empty_handler);
+            });
+
+            route.with_pipeline_chain(default_chain, |route| {
+                route
+                    .post("/token/verify")
+                    .to(handlers::auth::verify_invite_token);
             });
 
             route.with_pipeline_chain(auth_chain, |route| {
